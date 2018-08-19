@@ -123,7 +123,7 @@ public final class OneTapSamples {
     // It should suggest one tap with debit card
     private static MercadoPagoCheckout.Builder startOneTapWithAccountMoneyAndCardsDebitCreditAndExcludedAccountMoney() {
         final GenericPayment payment = new GenericPayment(123L, Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED, getPaymentDataWithDebitCardMaster(new BigDecimal(120)));
+            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
         final PaymentProcessor samplePaymentProcessor = new SamplePaymentProcessor(payment);
         final Collection<String> excludedPaymentTypes = new ArrayList<>();
         excludedPaymentTypes.add("account_money");
@@ -137,7 +137,7 @@ public final class OneTapSamples {
     // It should suggest one tap with credit card
     private static MercadoPagoCheckout.Builder startOneTapWithAccountMoneyAndCardsDebitCreditAndExcludedAccountMoneyAndDebit() {
         final GenericPayment payment = new GenericPayment(123L, Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED, getPaymentDataWithCreditCardNaranja(new BigDecimal(120)));
+            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
         final PaymentProcessor samplePaymentProcessor = new SamplePaymentProcessor(payment);
         final Collection<String> excludedPaymentTypes = new ArrayList<>();
         excludedPaymentTypes.add("account_money");

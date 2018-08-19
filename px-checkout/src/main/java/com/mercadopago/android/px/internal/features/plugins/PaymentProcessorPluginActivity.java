@@ -56,7 +56,6 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
         setContentView(frameLayout,
             new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        final CheckoutStore store = CheckoutStore.getInstance();
         final Session session = Session.getSession(getApplicationContext());
         final ConfigurationModule configurationModule = session.getConfigurationModule();
         final PaymentProcessor paymentProcessor =
@@ -64,10 +63,9 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
                 .getPaymentConfiguration()
                 .getPaymentProcessor();
 
-        final PaymentData paymentData = store.getPaymentData();
         final CheckoutPreference checkoutPreference = configurationModule.getPaymentSettings().getCheckoutPreference();
         final PaymentProcessor.CheckoutData checkoutData =
-            new PaymentProcessor.CheckoutData(paymentData, checkoutPreference);
+            new PaymentProcessor.CheckoutData(session.getPaymentRepository().getPaymentData(), checkoutPreference);
 
         final Fragment fragment = paymentProcessor.getFragment(checkoutData, this);
         final Bundle fragmentBundle = paymentProcessor.getFragmentBundle(checkoutData, this);
@@ -85,17 +83,21 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
     }
 
     private PaymentResult toPaymentResult(@NonNull final GenericPayment genericPayment) {
+        //TODO fix
+        final PaymentData paymentData = Session.getSession(this).getPaymentRepository().getPaymentData();
 
         final Payment payment = new Payment();
         payment.setId(genericPayment.paymentId);
-        payment.setPaymentMethodId(genericPayment.paymentData.getPaymentMethod().getId());
+        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
         payment.setPaymentTypeId(PaymentTypes.PLUGIN);
         payment.setStatus(genericPayment.status);
         payment.setStatusDetail(genericPayment.statusDetail);
-
+        //TODO ver statement description - Not present en generic payment.
         return new PaymentResult.Builder()
-            .setPaymentData(genericPayment.paymentData)
+            .setPaymentData(paymentData)
             .setPaymentId(payment.getId())
+            //TODO si tiene payment data para q el email?
+            .setPayerEmail(paymentData.getPayer().getEmail())
             .setPaymentStatus(payment.getStatus())
             .setPaymentStatusDetail(payment.getStatusDetail())
             .build();

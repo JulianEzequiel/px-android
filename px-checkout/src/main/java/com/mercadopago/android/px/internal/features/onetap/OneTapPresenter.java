@@ -11,6 +11,7 @@ import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.Payment;
+import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentResult;
 import com.mercadopago.android.px.model.PaymentTypes;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
@@ -59,15 +60,21 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     }
 
     private PaymentResult toPaymentResult(@NonNull final GenericPayment genericPayment) {
+        //TODO unify presenter
+        //TODO move to payment repository
+        final PaymentData paymentData = paymentRepository.getPaymentData();
+
         final Payment payment = new Payment();
         payment.setId(genericPayment.paymentId);
-        payment.setPaymentMethodId(genericPayment.paymentData.getPaymentMethod().getId());
+        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
         payment.setPaymentTypeId(PaymentTypes.PLUGIN);
         payment.setStatus(genericPayment.status);
         payment.setStatusDetail(genericPayment.statusDetail);
 
         return new PaymentResult.Builder()
-            .setPaymentData(genericPayment.paymentData)
+            .setPaymentData(paymentData)
+            .setPayerEmail(paymentData.getPayer().getEmail())
+            //TODO unify - Payment processor
             .setPaymentId(payment.getId())
             .setPaymentStatus(payment.getStatus())
             .setPaymentStatusDetail(payment.getStatusDetail())
@@ -102,6 +109,9 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
     @Override
     public void onPaymentError(@NonNull final MercadoPagoError error) {
+        //TODO add recovery handling to payment service?
+//        getView().hideProgress();
+//        resolvePaymentError(error, paymentRepository.getPaymentData());
         if (isViewAttached()) {
             getView().showErrorView(error);
         }
@@ -162,4 +172,10 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
         Log.d(OneTapPresenter.class.getName(), "Should not happen. - onPayerCostRequired");
         cancel();
     }
+
+    @Override
+    public void cardVaultCanceled() {
+        //TODO?
+    }
+
 }

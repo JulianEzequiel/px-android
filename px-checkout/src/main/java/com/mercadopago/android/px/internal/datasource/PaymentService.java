@@ -134,20 +134,16 @@ public class PaymentService implements PaymentRepository {
         if (paymentProcessor.shouldShowFragmentOnPayment()) {
             paymentServiceHandler.onVisualPayment();
         } else {
-
             final CheckoutPreference checkoutPreference = paymentSettingRepository.getCheckoutPreference();
-            final PaymentData paymentData = createPaymentData();
-            //TODO fix
-            CheckoutStore.getInstance().setPaymentData(paymentData);
             final PaymentProcessor.CheckoutData checkoutData =
-                new PaymentProcessor.CheckoutData(paymentData, checkoutPreference);
+                new PaymentProcessor.CheckoutData(getPaymentData(), checkoutPreference);
 
             paymentProcessor.startPayment(checkoutData, context, paymentServiceHandler);
         }
     }
 
-    //TODO remove duplication - Presenter Checkout
-    private PaymentData createPaymentData() {
+    @Override
+    public PaymentData getPaymentData() {
         final PaymentData paymentData = new PaymentData();
         paymentData.setPaymentMethod(userSelectionRepository.getPaymentMethod());
         paymentData.setPayerCost(userSelectionRepository.getPayerCost());
@@ -156,7 +152,24 @@ public class PaymentService implements PaymentRepository {
         paymentData.setDiscount(discountRepository.getDiscount());
         paymentData.setTransactionAmount(amountRepository.getAmountToPay());
         //TODO verify identification for payer that comes from boleto selection.
+        //TODO add more info from userSelectionRepository.
+        //getCheckoutPreference().getPayer(), state.collectedPayer
         paymentData.setPayer(paymentSettingRepository.getCheckoutPreference().getPayer());
         return paymentData;
     }
+
+//    private Payer createPayerFrom(final Payer checkoutPreferencePayer,
+//        final Payer collectedPayer) {
+//        Payer payerForPayment;
+//        if (checkoutPreferencePayer != null && collectedPayer != null) {
+//            payerForPayment = copy(checkoutPreferencePayer);
+//            payerForPayment.setFirstName(collectedPayer.getFirstName());
+//            payerForPayment.setLastName(collectedPayer.getLastName());
+//            payerForPayment.setIdentification(collectedPayer.getIdentification());
+//        } else {
+//            payerForPayment = checkoutPreferencePayer;
+//        }
+//        return payerForPayment;
+//    }
+
 }

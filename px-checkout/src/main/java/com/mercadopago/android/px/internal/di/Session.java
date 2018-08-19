@@ -187,7 +187,6 @@ public final class Session extends ApplicationModule
 
     @NonNull
     public PaymentRepository getPaymentRepository() {
-        //TODO fix getPaymentProcessor / default payment processor.
         if (paymentRepository == null) {
             final ConfigurationModule configurationModule = getConfigurationModule();
             final PaymentProcessor paymentProcessor =

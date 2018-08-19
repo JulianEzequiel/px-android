@@ -63,16 +63,13 @@ public class OneTapPresenterTest {
 
     @Before
     public void setUp() {
-        when(metadata.getCard()).thenReturn(cardMetadata);
-        when(model.getPaymentMethods()).thenReturn(paymentMethodSearch);
-        when(paymentMethodSearch.getOneTapMetadata()).thenReturn(metadata);
         oneTapPresenter = new OneTapPresenter(model, paymentRepository);
         oneTapPresenter.attachView(view);
     }
 
     @Test
     public void whenConfirmStartPayment() {
-        configPlugin();
+//        configPlugin();
         oneTapPresenter.confirmPayment();
         verify(view).trackConfirm(model);
         //TODO fix
@@ -103,7 +100,7 @@ public class OneTapPresenterTest {
 
     @Test
     public void whenAnyTokenReceivedThenShowCardPaymentFlow() {
-        cardConfig();
+//        cardConfig();
         configuration.configure(mock(Token.class));
         oneTapPresenter.onTokenResolved();
         //TODO fix

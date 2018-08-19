@@ -59,12 +59,13 @@ public class MercadoPagoPaymentProcessor implements PaymentProcessor {
 
         //TODO idempotency key, customer id?
         //TODO payer identification - in 40.0.0 it;s mutable for brasil.
-        createPaymentInMercadoPago(paymentSettings.getTransactionId(), data.checkoutPreference, data.paymentData,
+        createPaymentInMercadoPago(paymentSettings.getTransactionId(),
+            data.checkoutPreference, data.paymentData,
             data.checkoutPreference.isBinaryMode(), publicKey,
             new TaggedCallback<Payment>(ApiUtil.RequestOrigin.CREATE_PAYMENT) {
                 @Override
                 public void onSuccess(final Payment payment) {
-                    paymentListener.onPaymentFinished(mapPayment(payment, data));
+                    paymentListener.onPaymentFinished(mapPayment(payment));
                 }
 
                 @Override
@@ -74,11 +75,12 @@ public class MercadoPagoPaymentProcessor implements PaymentProcessor {
             });
     }
 
+    //TODO add mapper
     /* default */
     @NonNull
-    GenericPayment mapPayment(final Payment payment, @NonNull final CheckoutData data) {
+    GenericPayment mapPayment(final Payment payment) {
         return new GenericPayment(payment.getId(), payment.getStatus(),
-            payment.getStatusDetail(), data.paymentData);
+            payment.getStatusDetail());
     }
 
     private void createPaymentInMercadoPago(@NonNull final String transactionId,

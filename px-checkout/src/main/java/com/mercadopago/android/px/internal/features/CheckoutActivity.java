@@ -119,7 +119,8 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
                     configurationModule.getUserSelectionRepository(),
                     session.getDiscountRepository(),
                     session.getGroupsRepository(),
-                    session.getPluginRepository());
+                    session.getPluginRepository(),
+                    session.getPaymentRepository());
             privateKey = savedInstanceState.getString(EXTRA_PRIVATE_KEY);
             merchantPublicKey = savedInstanceState.getString(EXTRA_PUBLIC_KEY);
             configurePresenter();
@@ -146,7 +147,8 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
             configurationModule.getUserSelectionRepository(),
             session.getDiscountRepository(),
             session.getGroupsRepository(),
-            session.getPluginRepository());
+            session.getPluginRepository(),
+            session.getPaymentRepository());
     }
 
     @Override
@@ -497,16 +499,6 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
     @Override
     public void onOneTapCanceled() {
         cancelCheckout();
-    }
-
-    @Override
-    public void onOneTapConfirmCardFlow() {
-        presenter.confirmCardFlow();
-    }
-
-    @Override
-    public void onOneTapCardFlowCanceled() {
-        presenter.cancelCardFlow();
     }
 
     //TODO UNIFY
