@@ -355,7 +355,6 @@ public class CardVaultPresenter extends MvpPresenter<CardVaultView, CardVaultPro
 
     public void resolveNewCardRequest(final PayerCost payerCost,
         final List<PayerCost> payerCosts, final List<Issuer> issuers) {
-
         setCardInfo(new CardInfo(paymentSettingRepository.getToken()));
         setPayerCost(payerCost);
         setPayerCostsList(payerCosts);
