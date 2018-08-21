@@ -99,7 +99,7 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
     public void onPaymentFinished(@NonNull final Payment payment) {
         final Intent intent = new Intent();
         intent.putExtra(EXTRA_PAYMENT, payment);
-        setResult(RESULT_OK);
+        setResult(RESULT_OK, intent);
         finish();
     }
 
@@ -107,7 +107,7 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
     public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
         final Intent intent = new Intent();
         intent.putExtra(EXTRA_GENERIC_PAYMENT, (Parcelable) genericPayment);
-        setResult(RESULT_OK);
+        setResult(RESULT_OK, intent);
         finish();
     }
 

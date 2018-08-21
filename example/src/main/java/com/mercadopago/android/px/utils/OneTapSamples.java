@@ -10,8 +10,6 @@ import com.mercadopago.android.px.internal.features.plugins.SamplePaymentProcess
 import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.Item;
 import com.mercadopago.android.px.model.Payment;
-import com.mercadopago.android.px.model.PaymentData;
-import com.mercadopago.android.px.model.PaymentMethod;
 import com.mercadopago.android.px.model.Sites;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
 import java.math.BigDecimal;
@@ -293,22 +291,6 @@ public final class OneTapSamples {
         return new MercadoPagoCheckout.Builder(ONE_TAP_CODE_DISCOUNT_MERCHANT_PUBLIC_KEY, preference,
             PaymentConfigurationUtils.create())
             .setPrivateKey(ONE_TAP_PAYER_3_ACCESS_TOKEN);
-    }
-
-    private static PaymentData getPaymentDataWithDebitCardMaster(final BigDecimal amount) {
-        final PaymentData paymentData = new PaymentData();
-        final PaymentMethod paymentMethod = new PaymentMethod("debmaster", "Mastercard Débito", "debit_card");
-        paymentData.setPaymentMethod(paymentMethod);
-        paymentData.setTransactionAmount(amount);
-        return paymentData;
-    }
-
-    private static PaymentData getPaymentDataWithCreditCardNaranja(final BigDecimal amount) {
-        final PaymentData paymentData = new PaymentData();
-        final PaymentMethod paymentMethod = new PaymentMethod("naranja", "Naranja", "credit_card");
-        paymentData.setPaymentMethod(paymentMethod);
-        paymentData.setTransactionAmount(amount);
-        return paymentData;
     }
 
     private static CheckoutPreference getCheckoutPreferenceWithPayerEmail(final int amount) {
