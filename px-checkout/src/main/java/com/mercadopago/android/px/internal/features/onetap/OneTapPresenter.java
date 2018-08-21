@@ -10,6 +10,7 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.GenericPayment;
+import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
 /* default */ class OneTapPresenter extends MvpPresenter<OneTap.View, ResourcesProvider>
@@ -55,6 +56,13 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
         }
     }
 
+    @Override
+    public void onPaymentFinished(@NonNull final Payment payment) {
+        if (isViewAttached()) {
+            getView().showPaymentResult(payment);
+        }
+    }
+
     /**
      * When there is no visual interaction needed this callback is called.
      *
@@ -62,9 +70,8 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
      */
     @Override
     public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
-        //TODO add esc logic.
         if (isViewAttached()) {
-            getView().showPaymentResult(paymentRepository.createPaymentResult(genericPayment));
+            getView().showPaymentResult(genericPayment);
         }
     }
 
@@ -75,7 +82,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
      */
     @Override
     public void onPaymentFinished(@NonNull final BusinessPayment businessPayment) {
-        //TODO add esc logic.
         if (isViewAttached()) {
             getView().showBusinessResult(businessPayment);
         }

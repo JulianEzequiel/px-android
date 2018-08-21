@@ -179,7 +179,7 @@ public class CheckoutProviderImpl implements CheckoutProvider {
     }
 
     @Override
-    public String getCheckoutExceptionMessage(IllegalStateException exception) {
+    public String getCheckoutExceptionMessage(final Exception exception) {
         return context.getString(R.string.px_standard_error_message);
     }
 

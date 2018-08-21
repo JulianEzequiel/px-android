@@ -2,13 +2,12 @@ package com.mercadopago.android.px.model;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class Payment implements Serializable, IPayment {
+public class Payment implements IPayment {
 
     private Boolean binaryMode;
     private String callForAuthorizeId;

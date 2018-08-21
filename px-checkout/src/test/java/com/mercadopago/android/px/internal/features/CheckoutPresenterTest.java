@@ -22,6 +22,7 @@ import com.mercadopago.android.px.model.Campaign;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.Cause;
 import com.mercadopago.android.px.model.Customer;
+import com.mercadopago.android.px.model.Discount;
 import com.mercadopago.android.px.model.Identification;
 import com.mercadopago.android.px.model.Issuer;
 import com.mercadopago.android.px.model.Payer;
@@ -49,6 +50,7 @@ import com.mercadopago.android.px.utils.PluginInitializationSuccess;
 import com.mercadopago.android.px.utils.StubSuccessMpCall;
 import com.mercadopago.android.px.internal.viewmodel.CheckoutStateModel;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -1099,7 +1101,8 @@ public class CheckoutPresenterTest {
         }
 
         @Override
-        public void showPaymentResult(PaymentResult paymentResult) {
+        public void showPaymentResult(PaymentResult paymentResult, @NonNull final BigDecimal amountToPay,
+            final Discount discount) {
             showingPaymentMethodSelection = false;
             showingReviewAndConfirm = false;
             showingPaymentResult = true;

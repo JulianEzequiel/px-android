@@ -22,7 +22,7 @@ import com.mercadopago.android.px.internal.util.ErrorUtil;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
-import com.mercadopago.android.px.model.PaymentResult;
+import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import java.math.BigDecimal;
 
@@ -212,7 +212,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
-    public void showPaymentResult(final PaymentResult paymentResult) {
+    public void showPaymentResult(final IPayment paymentResult) {
         //TODO refactor
         if (getActivity() != null) {
             ((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);

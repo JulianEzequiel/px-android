@@ -4,9 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import com.mercadopago.android.px.BuildConfig;
 import com.mercadopago.android.px.R;
-import com.mercadopago.android.px.internal.datasource.CheckoutStore;
 import com.mercadopago.android.px.internal.datasource.MercadoPagoESCImpl;
 import com.mercadopago.android.px.internal.di.ConfigurationModule;
 import com.mercadopago.android.px.internal.di.Session;
@@ -32,6 +32,8 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.ActionEvent;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
+import com.mercadopago.android.px.model.Discount;
+import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentRecovery;
 import com.mercadopago.android.px.model.PaymentResult;
@@ -52,16 +54,11 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
 
     private static final int BUSINESS_REQUEST_CODE = 400;
     private static final int PAYMENT_PROCESSOR_REQUEST_CODE = 0x123;
-
-    private static final String EXTRA_TOKEN = "token";
-
     private static final String EXTRA_PAYMENT_METHOD_CHANGED = "paymentMethodChanged";
     private static final String EXTRA_NEXT_ACTION = "nextAction";
     private static final String EXTRA_RESULT_CODE = "resultCode";
-
     private static final String EXTRA_CARD = "card";
-    private static final String EXTRA_PAYER = "payer";
-
+    private static final String EXTRA_TOKEN = "token";
     private static final String EXTRA_PERSISTENT_DATA = "extra_persistent_data";
     private static final String EXTRA_PRIVATE_KEY = "extra_private_key";
     private static final String EXTRA_PUBLIC_KEY = "extra_public_key";
@@ -278,9 +275,12 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
         if (PaymentProcessorPluginActivity.isBusiness(data)) {
             final BusinessPayment businessPayment = PaymentProcessorPluginActivity.getBusinessPayment(data);
             presenter.onBusinessResult(businessPayment);
+        } else if (PaymentProcessorPluginActivity.isGeneric(data)) {
+            final GenericPayment genericPayment = PaymentProcessorPluginActivity.getGenericPayment(data);
+            presenter.checkStartPaymentResultActivity(genericPayment);
         } else {
-            final PaymentResult paymentResult = CheckoutStore.getInstance().getPaymentResult();
-            presenter.checkStartPaymentResultActivity(paymentResult);
+            final Payment payment = PaymentProcessorPluginActivity.getPayment(data);
+            presenter.checkStartPaymentResultActivity(payment);
         }
     }
 
@@ -360,8 +360,6 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
         overrideTransitionIn();
         new ReviewAndConfirmBuilder()
             .setMerchantPublicKey(merchantPublicKey)
-            .setPreference(presenter.getCheckoutPreference())
-            .setDiscount(presenter.getDiscount(), presenter.getCampaign())
             .setToken(presenter.getCreatedToken())
             .setIssuer(presenter.getIssuer())
             .setHasExtraPaymentMethods(!isUniquePaymentMethod)
@@ -384,20 +382,19 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
         }
     }
 
+    //TODO refactor - params amount and discount are not necessary for this.
     @Override
-    public void showPaymentResult(final PaymentResult paymentResult) {
-        final BigDecimal amount =
-            presenter.getCreatedPayment() == null ? presenter.getCheckoutPreference().getTotalAmount()
-                : presenter.getCreatedPayment().getTransactionAmount();
+    public void showPaymentResult(final PaymentResult paymentResult,
+        @NonNull final BigDecimal amountToPay,
+        @Nullable final Discount discount) {
+        overrideTransitionFadeInFadeOut();
 
         new MercadoPagoComponents.Activities.PaymentResultActivityBuilder()
             .setActivity(this)
             .setPaymentResult(paymentResult)
-            .setDiscount(presenter.getDiscount())
-            .setAmount(amount)
+            .setDiscount(discount)
+            .setAmount(amountToPay)
             .startActivity();
-
-        overrideTransitionFadeInFadeOut();
     }
 
     @Override
@@ -418,9 +415,9 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
             final String nextAction = data.getStringExtra(EXTRA_NEXT_ACTION);
             presenter.onPaymentResultCancel(nextAction);
         } else {
+
             if (data != null && data.hasExtra(EXTRA_RESULT_CODE)) {
-                final Integer finalResultCode =
-                    data.getIntExtra(EXTRA_RESULT_CODE, PAYMENT_RESULT_CODE);
+                final Integer finalResultCode = data.getIntExtra(EXTRA_RESULT_CODE, PAYMENT_RESULT_CODE);
                 customDataBundle = data;
                 presenter.onCustomPaymentResultResponse(finalResultCode);
             } else {

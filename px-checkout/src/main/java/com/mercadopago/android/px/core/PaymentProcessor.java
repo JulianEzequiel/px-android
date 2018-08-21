@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.GenericPayment;
+import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
@@ -28,6 +29,8 @@ public interface PaymentProcessor extends Serializable {
     }
 
     interface OnPaymentListener {
+
+        void onPaymentFinished(@NonNull final Payment payment);
 
         void onPaymentFinished(@NonNull final GenericPayment genericPayment);
 

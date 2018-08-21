@@ -14,9 +14,8 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.internal.viewmodel.mappers.CardMapper;
 import com.mercadopago.android.px.internal.viewmodel.mappers.PaymentMethodMapper;
 import com.mercadopago.android.px.model.Card;
-import com.mercadopago.android.px.model.GenericPayment;
+import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.OneTapMetadata;
-import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentMethod;
 import com.mercadopago.android.px.model.PaymentResult;
@@ -162,21 +161,12 @@ public class PaymentService implements PaymentRepository {
 
     @NonNull
     @Override
-    public PaymentResult createPaymentResult(@NonNull final GenericPayment genericPayment) {
-        //TODO check everything
-        final PaymentData paymentData = getPaymentData();
-        final Payment payment = new Payment();
-        payment.setId(genericPayment.id);
-        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
-        payment.setPaymentTypeId(paymentData.getPaymentMethod().getPaymentTypeId());
-        payment.setStatus(genericPayment.status);
-        payment.setStatusDetail(genericPayment.statusDetail);
-
+    public PaymentResult createPaymentResult(@NonNull final IPayment payment) {
         return new PaymentResult.Builder()
-            .setPaymentData(paymentData)
+            .setPaymentData(getPaymentData())
             .setPaymentId(payment.getId())
             .setPaymentStatus(payment.getPaymentStatus())
-            .setStatementDescription(genericPayment.statementDescription)
+            .setStatementDescription(payment.getStatementDescription())
             .setPaymentStatusDetail(payment.getPaymentStatusDetail())
             .build();
     }

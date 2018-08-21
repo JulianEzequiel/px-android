@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import com.mercadopago.android.px.internal.features.cardvault.CardVaultActivity;
 import com.mercadopago.android.px.internal.features.guessing_card.GuessingCardActivity;
@@ -408,7 +409,7 @@ public class MercadoPagoComponents {
                 return this;
             }
 
-            public PaymentResultActivityBuilder setDiscount(Discount discount) {
+            public PaymentResultActivityBuilder setDiscount(@Nullable final Discount discount) {
                 this.discount = discount;
                 return this;
             }

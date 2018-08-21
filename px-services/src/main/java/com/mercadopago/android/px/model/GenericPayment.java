@@ -1,9 +1,11 @@
 package com.mercadopago.android.px.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-public class GenericPayment implements IPayment {
+public class GenericPayment implements IPayment, Parcelable {
 
     public final Long id;
     public final String status;
@@ -17,17 +19,6 @@ public class GenericPayment implements IPayment {
         this.status = status;
         this.statusDetail = processStatusDetail(status, statusDetail);
         statementDescription = null;
-    }
-
-    //TODO verify with IOS statement description.
-    public GenericPayment(final Long paymentId,
-        @NonNull final String status,
-        @NonNull final String statusDetail,
-        @NonNull final String statementDescription) {
-        id = paymentId;
-        this.status = status;
-        this.statusDetail = processStatusDetail(status, statusDetail);
-        this.statementDescription = statementDescription;
     }
 
     /**
@@ -86,5 +77,56 @@ public class GenericPayment implements IPayment {
             payment.getPaymentStatus(),
             payment.getPaymentStatusDetail(),
             payment.getStatementDescription());
+    }
+
+    public static final Creator<GenericPayment> CREATOR = new Creator<GenericPayment>() {
+        @Override
+        public GenericPayment createFromParcel(final Parcel in) {
+            return new GenericPayment(in);
+        }
+
+        @Override
+        public GenericPayment[] newArray(final int size) {
+            return new GenericPayment[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(final Parcel dest, final int flags) {
+        if (id == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(id);
+        }
+        dest.writeString(status);
+        dest.writeString(statusDetail);
+        dest.writeString(statementDescription);
+    }
+
+    protected GenericPayment(final Parcel in) {
+        if (in.readByte() == 0) {
+            id = null;
+        } else {
+            id = in.readLong();
+        }
+        status = in.readString();
+        statusDetail = in.readString();
+        statementDescription = in.readString();
+    }
+
+    public GenericPayment(final Long paymentId,
+        @NonNull final String status,
+        @NonNull final String statusDetail,
+        @NonNull final String statementDescription) {
+        id = paymentId;
+        this.status = status;
+        this.statusDetail = processStatusDetail(status, statusDetail);
+        this.statementDescription = statementDescription;
     }
 }

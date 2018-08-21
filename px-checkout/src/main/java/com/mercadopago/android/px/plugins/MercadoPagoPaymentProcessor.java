@@ -11,7 +11,6 @@ import com.mercadopago.android.px.internal.datasource.MercadoPagoServicesAdapter
 import com.mercadopago.android.px.internal.di.Session;
 import com.mercadopago.android.px.internal.repository.PaymentSettingRepository;
 import com.mercadopago.android.px.internal.util.ApiUtil;
-import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentBody;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
@@ -56,15 +55,12 @@ public class MercadoPagoPaymentProcessor implements PaymentProcessor {
             new PaymentBody(paymentSettings.getTransactionId(), data.paymentData, data.checkoutPreference);
         paymentBody.setBinaryMode(data.checkoutPreference.isBinaryMode());
         paymentBody.setPublicKey(publicKey);
-
         //TODO idempotency key, customer id?
-
         mercadoPagoServiceAdapter.createPayment(paymentBody,
             new TaggedCallback<Payment>(ApiUtil.RequestOrigin.CREATE_PAYMENT) {
                 @Override
                 public void onSuccess(final Payment payment) {
-                    //TODO - check
-                    paymentListener.onPaymentFinished(GenericPayment.from(payment));
+                    paymentListener.onPaymentFinished(payment);
                 }
 
                 @Override

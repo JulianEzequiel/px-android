@@ -2,8 +2,6 @@ package com.mercadopago.android.px.internal.datasource;
 
 import com.mercadopago.android.px.internal.features.hooks.CheckoutHooks;
 import com.mercadopago.android.px.internal.features.hooks.Hook;
-import com.mercadopago.android.px.model.Payment;
-import com.mercadopago.android.px.model.PaymentResult;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,13 +14,11 @@ public final class CheckoutStore {
 
     //App state
     private Hook hook;
-    private final Map<String, Object> data = new HashMap<>();
-
-    //Payment
-    private PaymentResult paymentResult;
-    private Payment payment;
+    private final Map<String, Object> data;
 
     private CheckoutStore() {
+        data = new HashMap<>();
+        checkoutHooks = null;
     }
 
     public static CheckoutStore getInstance() {
@@ -43,27 +39,5 @@ public final class CheckoutStore {
 
     public Map<String, Object> getData() {
         return data;
-    }
-
-
-    public Payment getPayment() {
-        return payment;
-    }
-
-    public void setPayment(final Payment payment) {
-        this.payment = payment;
-    }
-
-    public PaymentResult getPaymentResult() {
-        return paymentResult;
-    }
-
-    public void setPaymentResult(final PaymentResult paymentResult) {
-        this.paymentResult = paymentResult;
-    }
-
-    public void reset() {
-        paymentResult = null;
-        payment = null;
     }
 }
