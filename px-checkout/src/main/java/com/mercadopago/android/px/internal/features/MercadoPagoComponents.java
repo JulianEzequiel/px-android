@@ -48,7 +48,6 @@ public class MercadoPagoComponents {
         public static final int SECURITY_CODE_REQUEST_CODE = 18;
         public static final int REVIEW_AND_CONFIRM_REQUEST_CODE = 20;
         public static final int REVIEW_PAYMENT_METHODS_REQUEST_CODE = 21;
-        public static final int PAYER_INFORMATION_REQUEST_CODE = 22;
 
         public static final int HOOK_1 = 50;
         public static final int HOOK_1_PLUGIN = 52;
@@ -395,29 +394,6 @@ public class MercadoPagoComponents {
                 intent.putExtra("paymentTypes", JsonUtil.getInstance().toJson(paymentTypes));
                 intent.putExtra("cardInfo", JsonUtil.getInstance().toJson(cardInformation));
                 activity.startActivityForResult(intent, PAYMENT_TYPES_REQUEST_CODE);
-            }
-        }
-
-        public static class PayerInformationActivityBuilder {
-            private Activity activity;
-
-            public PayerInformationActivityBuilder setActivity(Activity activity) {
-                this.activity = activity;
-                return this;
-            }
-
-            public void startActivity() {
-
-                if (activity == null) {
-                    throw new IllegalStateException("activity is null");
-                }
-                startPayerInformationActivity();
-            }
-
-            private void startPayerInformationActivity() {
-                Intent payerInformationIntent = new Intent(activity, PayerInformationActivity.class);
-
-                activity.startActivityForResult(payerInformationIntent, PAYER_INFORMATION_REQUEST_CODE);
             }
         }
 

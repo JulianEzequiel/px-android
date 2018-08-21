@@ -10,10 +10,6 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.GenericPayment;
-import com.mercadopago.android.px.model.Payment;
-import com.mercadopago.android.px.model.PaymentData;
-import com.mercadopago.android.px.model.PaymentResult;
-import com.mercadopago.android.px.model.PaymentTypes;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
 /* default */ class OneTapPresenter extends MvpPresenter<OneTap.View, ResourcesProvider>
@@ -59,28 +55,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
         }
     }
 
-    private PaymentResult toPaymentResult(@NonNull final GenericPayment genericPayment) {
-        //TODO unify presenter
-        //TODO move to payment repository
-        final PaymentData paymentData = paymentRepository.getPaymentData();
-
-        final Payment payment = new Payment();
-        payment.setId(genericPayment.paymentId);
-        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
-        payment.setPaymentTypeId(PaymentTypes.PLUGIN);
-        payment.setStatus(genericPayment.status);
-        payment.setStatusDetail(genericPayment.statusDetail);
-
-        return new PaymentResult.Builder()
-            .setPaymentData(paymentData)
-            .setPayerEmail(paymentData.getPayer().getEmail())
-            //TODO unify - Payment processor
-            .setPaymentId(payment.getId())
-            .setPaymentStatus(payment.getStatus())
-            .setPaymentStatusDetail(payment.getStatusDetail())
-            .build();
-    }
-
     /**
      * When there is no visual interaction needed this callback is called.
      *
@@ -90,7 +64,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
         //TODO add esc logic.
         if (isViewAttached()) {
-            getView().showPaymentResult(toPaymentResult(genericPayment));
+            getView().showPaymentResult(paymentRepository.createPaymentResult(genericPayment));
         }
     }
 

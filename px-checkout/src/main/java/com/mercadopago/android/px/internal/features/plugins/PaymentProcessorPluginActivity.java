@@ -16,15 +16,12 @@ import com.mercadopago.android.px.internal.di.ConfigurationModule;
 import com.mercadopago.android.px.internal.di.Session;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.GenericPayment;
-import com.mercadopago.android.px.model.Payment;
-import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentResult;
-import com.mercadopago.android.px.model.PaymentTypes;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
 
 public final class PaymentProcessorPluginActivity extends AppCompatActivity
-    implements PaymentProcessor.OnPaymentListener, Processor {
+    implements PaymentProcessor.OnPaymentListener {
 
     private static final String EXTRA_BUSINESS_PAYMENT = "extra_business_payment";
     private static final String PROCESSOR_FRAGMENT = "PROCESSOR_FRAGMENT";
@@ -82,29 +79,18 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
         }
     }
 
-    private PaymentResult toPaymentResult(@NonNull final GenericPayment genericPayment) {
-        //TODO fix
-        final PaymentData paymentData = Session.getSession(this).getPaymentRepository().getPaymentData();
-
-        final Payment payment = new Payment();
-        payment.setId(genericPayment.paymentId);
-        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
-        payment.setPaymentTypeId(PaymentTypes.PLUGIN);
-        payment.setStatus(genericPayment.status);
-        payment.setStatusDetail(genericPayment.statusDetail);
-        //TODO ver statement description - Not present en generic payment.
-        return new PaymentResult.Builder()
-            .setPaymentData(paymentData)
-            .setPaymentId(payment.getId())
-            //TODO si tiene payment data para q el email?
-            .setPayerEmail(paymentData.getPayer().getEmail())
-            .setPaymentStatus(payment.getStatus())
-            .setPaymentStatusDetail(payment.getStatusDetail())
-            .build();
+    @Override
+    public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
+        final PaymentResult paymentResult =
+            Session.getSession(this).getPaymentRepository().createPaymentResult(genericPayment);
+        //TODO remove payment result from here.
+        CheckoutStore.getInstance().setPaymentResult(paymentResult);
+        setResult(RESULT_OK);
+        finish();
     }
 
     @Override
-    public void process(final BusinessPayment businessPayment) {
+    public void onPaymentFinished(@NonNull final BusinessPayment businessPayment) {
         final Intent intent = new Intent();
         intent.putExtra(EXTRA_BUSINESS_PAYMENT, businessPayment);
         setResult(RESULT_OK, intent);
@@ -112,26 +98,7 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
     }
 
     @Override
-    public void process(final GenericPayment genericPayment) {
-        final PaymentResult paymentResult = toPaymentResult(genericPayment);
-        CheckoutStore.getInstance().setPaymentResult(paymentResult);
-        setResult(RESULT_OK);
-        finish();
-    }
-
-    @Override
-    public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
-        process(genericPayment);
-    }
-
-    @Override
-    public void onPaymentFinished(@NonNull final BusinessPayment businessPayment) {
-        process(businessPayment);
-    }
-
-    @Override
     public void onPaymentError(@NonNull final MercadoPagoError error) {
-        //TODO add error
         //TODO add error screen after payment like it was in CheckoutPresenter.
     }
 

@@ -14,9 +14,12 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.internal.viewmodel.mappers.CardMapper;
 import com.mercadopago.android.px.internal.viewmodel.mappers.PaymentMethodMapper;
 import com.mercadopago.android.px.model.Card;
+import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.OneTapMetadata;
+import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentMethod;
+import com.mercadopago.android.px.model.PaymentResult;
 import com.mercadopago.android.px.model.PaymentTypes;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
 
@@ -142,6 +145,7 @@ public class PaymentService implements PaymentRepository {
         }
     }
 
+    @NonNull
     @Override
     public PaymentData getPaymentData() {
         final PaymentData paymentData = new PaymentData();
@@ -151,25 +155,29 @@ public class PaymentService implements PaymentRepository {
         paymentData.setToken(paymentSettingRepository.getToken());
         paymentData.setDiscount(discountRepository.getDiscount());
         paymentData.setTransactionAmount(amountRepository.getAmountToPay());
-        //TODO verify identification for payer that comes from boleto selection.
-        //TODO add more info from userSelectionRepository.
-        //getCheckoutPreference().getPayer(), state.collectedPayer
+        //se agrego payer info a la pref - BOLBRADESCO
         paymentData.setPayer(paymentSettingRepository.getCheckoutPreference().getPayer());
         return paymentData;
     }
 
-//    private Payer createPayerFrom(final Payer checkoutPreferencePayer,
-//        final Payer collectedPayer) {
-//        Payer payerForPayment;
-//        if (checkoutPreferencePayer != null && collectedPayer != null) {
-//            payerForPayment = copy(checkoutPreferencePayer);
-//            payerForPayment.setFirstName(collectedPayer.getFirstName());
-//            payerForPayment.setLastName(collectedPayer.getLastName());
-//            payerForPayment.setIdentification(collectedPayer.getIdentification());
-//        } else {
-//            payerForPayment = checkoutPreferencePayer;
-//        }
-//        return payerForPayment;
-//    }
+    @NonNull
+    @Override
+    public PaymentResult createPaymentResult(@NonNull final GenericPayment genericPayment) {
+        //TODO check everything
+        final PaymentData paymentData = getPaymentData();
+        final Payment payment = new Payment();
+        payment.setId(genericPayment.id);
+        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
+        payment.setPaymentTypeId(paymentData.getPaymentMethod().getPaymentTypeId());
+        payment.setStatus(genericPayment.status);
+        payment.setStatusDetail(genericPayment.statusDetail);
 
+        return new PaymentResult.Builder()
+            .setPaymentData(paymentData)
+            .setPaymentId(payment.getId())
+            .setPaymentStatus(payment.getPaymentStatus())
+            .setStatementDescription(genericPayment.statementDescription)
+            .setPaymentStatusDetail(payment.getPaymentStatusDetail())
+            .build();
+    }
 }

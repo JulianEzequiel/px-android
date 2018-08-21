@@ -32,15 +32,14 @@ import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.Cause;
 import com.mercadopago.android.px.model.Discount;
 import com.mercadopago.android.px.model.GenericPayment;
+import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.Issuer;
-import com.mercadopago.android.px.model.Payer;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentMethod;
 import com.mercadopago.android.px.model.PaymentMethodSearch;
 import com.mercadopago.android.px.model.PaymentRecovery;
 import com.mercadopago.android.px.model.PaymentResult;
-import com.mercadopago.android.px.model.PaymentTypes;
 import com.mercadopago.android.px.model.Token;
 import com.mercadopago.android.px.model.exceptions.ApiException;
 import com.mercadopago.android.px.model.exceptions.CheckoutPreferenceException;
@@ -304,11 +303,9 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
 
     public void onPaymentMethodSelectionResponse(
         final Token token,
-        final Card card,
-        final Payer payer) {
+        final Card card) {
         state.createdToken = token;
         state.selectedCard = card;
-        state.collectedPayer = payer;
 
         onPaymentMethodSelected();
     }
@@ -364,7 +361,7 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
             public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
                 if (isViewAttached()) {
                     getView().hideProgress();
-                    checkStartPaymentResultActivity(toPaymentResult(genericPayment));
+                    checkStartPaymentResultActivity(paymentRepository.createPaymentResult(genericPayment));
                 }
             }
 
@@ -417,28 +414,6 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
                 });
 
                 */
-    }
-
-    //TODO REMOVE
-    private PaymentResult toPaymentResult(@NonNull final GenericPayment genericPayment) {
-        //TODO move to payment repository
-        final PaymentData paymentData = paymentRepository.getPaymentData();
-
-        final Payment payment = new Payment();
-        payment.setId(genericPayment.paymentId);
-        payment.setPaymentMethodId(paymentData.getPaymentMethod().getId());
-        payment.setPaymentTypeId(PaymentTypes.PLUGIN);
-        payment.setStatus(genericPayment.status);
-        payment.setStatusDetail(genericPayment.statusDetail);
-
-        return new PaymentResult.Builder()
-            .setPaymentData(paymentData)
-            .setPayerEmail(paymentData.getPayer().getEmail())
-            //TODO unify - Payment processor
-            .setPaymentId(payment.getId())
-            .setPaymentStatus(payment.getStatus())
-            .setPaymentStatusDetail(payment.getStatusDetail())
-            .build();
     }
 
     @VisibleForTesting
@@ -510,9 +485,8 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
     }
 
     private void resolveProcessingPaymentStatus() {
-        state.createdPayment = new Payment();
-        state.createdPayment.setStatus(Payment.StatusCodes.STATUS_IN_PROCESS);
-        state.createdPayment.setStatusDetail(Payment.StatusDetail.STATUS_DETAIL_PENDING_CONTINGENCY);
+        state.createdPayment =
+            new Payment(Payment.StatusCodes.STATUS_IN_PROCESS, Payment.StatusDetail.STATUS_DETAIL_PENDING_CONTINGENCY);
         final PaymentResult paymentResult =
             createPaymentResult(state.createdPayment, paymentRepository.getPaymentData());
         getView().showPaymentResult(paymentResult);
@@ -652,14 +626,14 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
         state.isUniquePaymentMethod = groupCount + customCount + pluginCount == 1;
     }
 
-    private PaymentResult createPaymentResult(final Payment payment, final PaymentData paymentData) {
+    private PaymentResult createPaymentResult(final IPayment payment, final PaymentData paymentData) {
         return new PaymentResult.Builder()
             .setPaymentData(paymentData)
+            //TODO CHECK WITH PREVIOUS VERSION ON RECOVERY
             .setPaymentId(payment.getId())
-            .setPaymentStatus(payment.getStatus())
-            .setPaymentStatusDetail(payment.getStatusDetail())
-            .setPayerEmail(getCheckoutPreference().getPayer().getEmail())
-            .setStatementDescription(payment.getStatementDescriptor())
+            .setPaymentStatus(payment.getPaymentStatus())
+            .setPaymentStatusDetail(payment.getPaymentStatusDetail())
+            .setStatementDescription(payment.getStatementDescription())
             .build();
     }
 
@@ -668,9 +642,10 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
             final PaymentResult paymentResult =
                 CheckoutStore.getInstance().getPaymentResult();
             final String paymentStatus =
-                state.createdPayment == null ? paymentResult.getPaymentStatus() : state.createdPayment.getStatus();
+                state.createdPayment == null ? paymentResult.getPaymentStatus()
+                    : state.createdPayment.getPaymentStatus();
             final String paymentStatusDetail = state.createdPayment == null ? paymentResult.getPaymentStatusDetail()
-                : state.createdPayment.getStatusDetail();
+                : state.createdPayment.getPaymentStatusDetail();
             state.paymentRecovery =
                 new PaymentRecovery(paymentSettingRepository.getToken(), userSelectionRepository.getPaymentMethod(),
                     userSelectionRepository.getPayerCost(),
@@ -786,9 +761,7 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
     }
 
     public void onBusinessResult(final BusinessPayment businessPayment) {
-        //TODO look for a better option than singleton, it make it not testeable.
         final PaymentData paymentData = paymentRepository.getPaymentData();
-
         //TODO move esc manager to payment service
         getResourcesProvider().manageEscForPayment(paymentData,
             businessPayment.getPaymentStatus(),
@@ -811,7 +784,8 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
      * Send intention to close checkout
      * if the checkout has oneTap data then it should not close.
      */
-    public void cancelCheckout() {//TODO FIX
+    public void cancelCheckout() {
+        //TODO IMPROVE.
         if (state.isOneTap) {
             getView().hideProgress();
         } else {

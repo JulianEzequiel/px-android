@@ -32,7 +32,6 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.ActionEvent;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
-import com.mercadopago.android.px.model.Payer;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentRecovery;
 import com.mercadopago.android.px.model.PaymentResult;
@@ -340,8 +339,8 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
         if (resultCode == RESULT_OK) {
             final Token token = JsonUtil.getInstance().fromJson(data.getStringExtra(EXTRA_TOKEN), Token.class);
             final Card card = JsonUtil.getInstance().fromJson(data.getStringExtra(EXTRA_CARD), Card.class);
-            final Payer payer = JsonUtil.getInstance().fromJson(data.getStringExtra(EXTRA_PAYER), Payer.class);
-            presenter.onPaymentMethodSelectionResponse(token, card, payer);
+
+            presenter.onPaymentMethodSelectionResponse(token, card);
         } else if (isErrorResult(data)) {
             final MercadoPagoError mercadoPagoError =
                 JsonUtil.getInstance().fromJson(data.getStringExtra(EXTRA_ERROR), MercadoPagoError.class);
