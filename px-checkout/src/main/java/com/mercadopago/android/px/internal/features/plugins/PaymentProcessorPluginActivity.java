@@ -14,11 +14,14 @@ import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.core.PaymentProcessor;
 import com.mercadopago.android.px.internal.di.ConfigurationModule;
 import com.mercadopago.android.px.internal.di.Session;
+import com.mercadopago.android.px.internal.util.ErrorUtil;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
+
+import static com.mercadopago.android.px.internal.util.ErrorUtil.ERROR_REQUEST_CODE;
 
 public final class PaymentProcessorPluginActivity extends AppCompatActivity
     implements PaymentProcessor.OnPaymentListener {
@@ -96,6 +99,14 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ERROR_REQUEST_CODE) {
+            cancelPayment();
+        }
+    }
+
+    @Override
     public void onPaymentFinished(@NonNull final Payment payment) {
         final Intent intent = new Intent();
         intent.putExtra(EXTRA_PAYMENT, payment);
@@ -121,8 +132,7 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
 
     @Override
     public void onPaymentError(@NonNull final MercadoPagoError error) {
-        //TODO add error screen after payment like it was in CheckoutPresenter ?
-        cancelPayment();
+        ErrorUtil.startErrorActivity(this, error);
     }
 
     @Override

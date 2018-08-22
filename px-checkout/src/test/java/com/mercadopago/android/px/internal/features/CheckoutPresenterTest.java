@@ -2,7 +2,6 @@ package com.mercadopago.android.px.internal.features;
 
 import android.support.annotation.NonNull;
 import com.mercadopago.android.px.configuration.AdvancedConfiguration;
-import com.mercadopago.android.px.configuration.PaymentResultScreenConfiguration;
 import com.mercadopago.android.px.internal.callbacks.TaggedCallback;
 import com.mercadopago.android.px.internal.features.hooks.Hook;
 import com.mercadopago.android.px.internal.features.providers.CheckoutProvider;
@@ -86,7 +85,6 @@ public class CheckoutPresenterTest {
     @Mock private UserSelectionRepository userSelectionRepository;
     @Mock private DiscountRepository discountRepository;
     @Mock private GroupsRepository groupsRepository;
-    @Mock private AdvancedConfiguration advancedConfiguration;
     @Mock private PluginRepository pluginRepository;
     @Mock private PaymentRepository paymentRepository;
 
@@ -128,9 +126,6 @@ public class CheckoutPresenterTest {
     private CheckoutPresenter getBasePresenter(
         final CheckoutView view,
         final CheckoutProvider provider) {
-        when(configuration.getAdvancedConfiguration()).thenReturn(advancedConfiguration);
-        when(advancedConfiguration.getPaymentResultScreenConfiguration())
-            .thenReturn(new PaymentResultScreenConfiguration.Builder().build());
 
         when(pluginRepository.getInitTask()).thenReturn(new PluginInitializationSuccess());
 
@@ -957,11 +952,6 @@ public class CheckoutPresenterTest {
         boolean finishedCheckoutWithoutPayment = false;
         boolean showingPaymentRecoveryFlow = false;
         PaymentRecovery paymentRecoveryRequested;
-
-        @Override
-        public void fetchImageFromUrl(String url) {
-            //Do nothing
-        }
 
         @Override
         public void showBusinessResult(final BusinessPaymentModel model) {

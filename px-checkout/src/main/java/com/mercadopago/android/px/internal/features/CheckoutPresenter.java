@@ -3,8 +3,6 @@ package com.mercadopago.android.px.internal.features;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import com.mercadopago.android.px.configuration.AdvancedConfiguration;
-import com.mercadopago.android.px.configuration.PaymentResultScreenConfiguration;
 import com.mercadopago.android.px.internal.base.MvpPresenter;
 import com.mercadopago.android.px.internal.callbacks.FailureRecovery;
 import com.mercadopago.android.px.internal.callbacks.TaggedCallback;
@@ -69,8 +67,6 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
     private final AmountRepository amountRepository;
     @NonNull
     private final UserSelectionRepository userSelectionRepository;
-    @NonNull
-    private final AdvancedConfiguration advancedConfiguration;
 
     private transient FailureRecovery failureRecovery;
 
@@ -89,7 +85,6 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
         this.userSelectionRepository = userSelectionRepository;
         this.discountRepository = discountRepository;
         this.groupsRepository = groupsRepository;
-        advancedConfiguration = paymentSettingRepository.getAdvancedConfiguration();
         this.pluginRepository = pluginRepository;
         this.paymentRepository = paymentRepository;
         state = persistentData;
@@ -126,25 +121,7 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
 
     private void startCheckout() {
         getResourcesProvider().fetchFonts();
-        fetchImages();
         initializePluginsData();
-    }
-
-    private void fetchImages() {
-        //TODO move this mechanism
-        final PaymentResultScreenConfiguration resultPreference =
-            advancedConfiguration.getPaymentResultScreenConfiguration();
-        if (isViewAttached()) {
-            if (!TextUtil.isEmpty(resultPreference.getApprovedUrlIcon())) {
-                getView().fetchImageFromUrl(resultPreference.getApprovedUrlIcon());
-            }
-            if (!TextUtil.isEmpty(resultPreference.getRejectedUrlIcon())) {
-                getView().fetchImageFromUrl(resultPreference.getRejectedUrlIcon());
-            }
-            if (!TextUtil.isEmpty(resultPreference.getPendingUrlIcon())) {
-                getView().fetchImageFromUrl(resultPreference.getPendingUrlIcon());
-            }
-        }
     }
 
     private void initializePluginsData() {
@@ -663,7 +640,7 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
      * if the checkout has oneTap data then it should not close.
      */
     public void cancelCheckout() {
-        //TODO IMPROVE.
+        //TODO improve this
         if (state.isOneTap) {
             getView().hideProgress();
         } else {
@@ -739,17 +716,17 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
 
     @Override
     public void onIssuerRequired() {
-        //TODO
+        //TODO check.
     }
 
     @Override
     public void onPayerCostRequired() {
-        //TODO
+        //TODO check.
     }
 
     @Override
     public void onTokenRequired() {
-        //TODO
+        //TODO check.
     }
 
     @Override

@@ -234,7 +234,7 @@ public class PayerInformationPresenter extends MvpPresenter<PayerInformationView
     }
 
     public boolean validateBusinessName() {
-        boolean isBusinessNameValid = validateString(mIdentificationBusinessName);
+        final boolean isBusinessNameValid = validateString(mIdentificationBusinessName);
 
         if (isBusinessNameValid) {
             getView().clearErrorView();

@@ -55,8 +55,6 @@ public interface CheckoutView extends MvpView {
 
     boolean isActive();
 
-    void fetchImageFromUrl(String url);
-
     void showBusinessResult(BusinessPaymentModel model);
 
     void showOneTap(@NonNull final OneTapModel oneTapModel);

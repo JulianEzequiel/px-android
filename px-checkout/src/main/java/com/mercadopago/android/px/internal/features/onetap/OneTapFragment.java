@@ -24,7 +24,6 @@ import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
-import java.math.BigDecimal;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
@@ -36,11 +35,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     private static final int REQ_CODE_PAYMENT_PROCESSOR = 0x123;
 
     private CallBack callback;
-    /* default */ OneTapPresenter presenter;
 
-    //TODO remove - just for tracking
-    private BigDecimal amountToPay;
-    private boolean hasDiscount;
+    /* default */ OneTapPresenter presenter;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
         final OneTapFragment oneTapFragment = new OneTapFragment();
@@ -91,11 +87,9 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         final Bundle arguments = getArguments();
         if (arguments != null) {
             final Session session = Session.getSession(view.getContext());
-            amountToPay = session.getAmountRepository().getAmountToPay();
-            hasDiscount = session.getDiscountRepository().getDiscount() != null;
+
             final OneTapModel model = (OneTapModel) arguments.getSerializable(ARG_ONE_TAP_MODEL);
-            presenter = new OneTapPresenter(model,
-                session.getPaymentRepository());
+            presenter = new OneTapPresenter(model, session.getPaymentRepository());
             configureView(view, presenter, model);
             presenter.attachView(this);
             trackScreen(model);
@@ -104,8 +98,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private void trackScreen(final OneTapModel model) {
         if (getActivity() != null) {
-            Tracker.trackOneTapScreen(getActivity().getApplicationContext(), model.getPublicKey(),
-                    model.getPaymentMethods().getOneTapMetadata(), amountToPay);
+            Tracker.trackOneTapScreen(getActivity().getApplicationContext(), model);
         }
     }
 
@@ -144,6 +137,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_OK) {
             presenter.onTokenResolved();
         } else if (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_CANCELED && callback != null) {
@@ -151,8 +146,6 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         } else if (requestCode == REQ_CODE_PAYMENT_PROCESSOR && getActivity() != null) {
             ((CheckoutActivity) getActivity()).resolvePaymentProcessor(resultCode, data);
         }
-
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -170,24 +163,21 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     @Override
     public void trackConfirm(final OneTapModel model) {
         if (getActivity() != null) {
-            Tracker.trackOneTapConfirm(getActivity().getApplicationContext(), model.getPublicKey(),
-                    model.getPaymentMethods().getOneTapMetadata(), amountToPay);
+            Tracker.trackOneTapConfirm(getActivity().getApplicationContext(), model);
         }
     }
 
     @Override
-    public void trackCancel(final String publicKey) {
+    public void trackCancel() {
         if (getActivity() != null) {
-            Tracker.trackOneTapCancel(getActivity().getApplicationContext(), publicKey);
+            Tracker.trackOneTapCancel(getActivity().getApplicationContext());
         }
     }
 
     @Override
     public void trackModal(final OneTapModel model) {
         if (getActivity() != null) {
-            Tracker
-                    .trackOneTapSummaryDetail(getActivity().getApplicationContext(), model.getPublicKey(), hasDiscount,
-                            model.getPaymentMethods().getOneTapMetadata().getCard());
+            Tracker.trackOneTapSummaryDetail(getActivity().getApplicationContext(), model);
         }
     }
 

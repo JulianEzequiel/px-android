@@ -45,7 +45,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     public void cancel() {
         if (isViewAttached()) {
             getView().cancel();
-            getView().trackCancel(model.getPublicKey());
+            getView().trackCancel();
         }
     }
 
@@ -90,7 +90,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     @Override
     public void onPaymentError(@NonNull final MercadoPagoError error) {
         //TODO add recovery handling to payment service?
-//        getView().hideProgress();
 //        resolvePaymentError(error, paymentRepository.getPaymentData());
         if (isViewAttached()) {
             getView().showErrorView(error);

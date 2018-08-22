@@ -22,7 +22,7 @@ public interface OneTap {
 
         void trackConfirm(final OneTapModel model);
 
-        void trackCancel(final String publicKey);
+        void trackCancel();
 
         void trackModal(final OneTapModel model);
 

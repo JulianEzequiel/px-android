@@ -64,7 +64,7 @@ public class SamplePaymentProcessor implements PaymentProcessor {
     public Fragment getFragment(@NonNull final CheckoutData data,
         @NonNull final Context context) {
         final SamplePaymentProcessorFragment samplePaymentProcessorFragment = new SamplePaymentProcessorFragment();
-        //TODO warning, dont you really do this.
+        // This is just a sample, you should't do this, you must process the payment inside the fragment.
         samplePaymentProcessorFragment.setPayment(iPayment);
         return samplePaymentProcessorFragment;
     }

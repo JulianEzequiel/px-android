@@ -55,7 +55,9 @@ public class MercadoPagoPaymentProcessor implements PaymentProcessor {
             new PaymentBody(paymentSettings.getTransactionId(), data.paymentData, data.checkoutPreference);
         paymentBody.setBinaryMode(data.checkoutPreference.isBinaryMode());
         paymentBody.setPublicKey(publicKey);
+
         //TODO idempotency key, customer id?
+
         mercadoPagoServiceAdapter.createPayment(paymentBody,
             new TaggedCallback<Payment>(ApiUtil.RequestOrigin.CREATE_PAYMENT) {
                 @Override

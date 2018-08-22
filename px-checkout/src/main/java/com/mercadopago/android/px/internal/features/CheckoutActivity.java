@@ -42,7 +42,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.preferences.PaymentPreference;
 import com.mercadopago.android.px.tracking.internal.MPTracker;
 import com.mercadopago.android.px.tracking.internal.utils.TrackingUtil;
-import com.squareup.picasso.Picasso;
 import java.math.BigDecimal;
 
 import static com.mercadopago.android.px.core.MercadoPagoCheckout.EXTRA_ERROR;
@@ -52,8 +51,9 @@ import static com.mercadopago.android.px.model.ExitAction.EXTRA_CLIENT_RES_CODE;
 
 public class CheckoutActivity extends MercadoPagoBaseActivity implements CheckoutView, OneTapFragment.CallBack {
 
-    private static final int BUSINESS_REQUEST_CODE = 400;
-    private static final int PAYMENT_PROCESSOR_REQUEST_CODE = 0x123;
+    private static final int REQ_CODE_BUSINESS = 400;
+    private static final int REQ_CODE_PAYMENT_PROCESSOR = 0x223;
+
     private static final String EXTRA_PAYMENT_METHOD_CHANGED = "paymentMethodChanged";
     private static final String EXTRA_NEXT_ACTION = "nextAction";
     private static final String EXTRA_RESULT_CODE = "resultCode";
@@ -63,7 +63,7 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
     private static final String EXTRA_PRIVATE_KEY = "extra_private_key";
     private static final String EXTRA_PUBLIC_KEY = "extra_public_key";
 
-    //TODO refactor
+    //TODO do not make it public
     public CheckoutPresenter presenter;
 
     private String merchantPublicKey;
@@ -148,16 +148,9 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
     }
 
     @Override
-    public void fetchImageFromUrl(final String url) {
-        Picasso.with(this)
-            .load(url)
-            .fetch();
-    }
-
-    @Override
     public void showBusinessResult(final BusinessPaymentModel model) {
         overrideTransitionIn();
-        BusinessPaymentResultActivity.start(this, model, merchantPublicKey, BUSINESS_REQUEST_CODE);
+        BusinessPaymentResultActivity.start(this, model, merchantPublicKey, REQ_CODE_BUSINESS);
     }
 
     @Override
@@ -221,10 +214,10 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
         case MercadoPagoComponents.Activities.HOOK_3:
             resolveHook3(resultCode);
             break;
-        case PAYMENT_PROCESSOR_REQUEST_CODE:
+        case REQ_CODE_PAYMENT_PROCESSOR:
             resolvePaymentProcessor(resultCode, data);
             break;
-        case BUSINESS_REQUEST_CODE:
+        case REQ_CODE_BUSINESS:
             resolveBusinessResultActivity(data);
             break;
         default:
@@ -466,7 +459,7 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
     @Override
     public void showPaymentProcessor() {
         overrideTransitionWithNoAnimation();
-        PaymentProcessorPluginActivity.start(this, PAYMENT_PROCESSOR_REQUEST_CODE);
+        PaymentProcessorPluginActivity.start(this, REQ_CODE_PAYMENT_PROCESSOR);
     }
 
     @Override
