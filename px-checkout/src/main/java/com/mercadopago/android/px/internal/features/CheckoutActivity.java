@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import com.mercadopago.android.px.BuildConfig;
 import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.internal.datasource.CheckoutStore;
@@ -26,6 +27,8 @@ import com.mercadopago.android.px.internal.util.ErrorUtil;
 import com.mercadopago.android.px.internal.util.JsonUtil;
 import com.mercadopago.android.px.internal.util.TextUtil;
 import com.mercadopago.android.px.internal.util.ViewUtils;
+import com.mercadopago.android.px.internal.view.exploding.ExplodingButtonFragment;
+import com.mercadopago.android.px.internal.view.exploding.ViewStylingParams;
 import com.mercadopago.android.px.internal.viewmodel.BusinessPaymentModel;
 import com.mercadopago.android.px.internal.viewmodel.CheckoutStateModel;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
@@ -48,7 +51,8 @@ import static com.mercadopago.android.px.core.MercadoPagoCheckout.EXTRA_PAYMENT_
 import static com.mercadopago.android.px.core.MercadoPagoCheckout.PAYMENT_RESULT_CODE;
 import static com.mercadopago.android.px.model.ExitAction.EXTRA_CLIENT_RES_CODE;
 
-public class CheckoutActivity extends MercadoPagoBaseActivity implements CheckoutView, OneTapFragment.CallBack {
+public class CheckoutActivity extends MercadoPagoBaseActivity implements CheckoutView, OneTapFragment.CallBack,
+    ExplodingButtonFragment.ExplodingButtonListener {
 
     private static final int BUSINESS_REQUEST_CODE = 400;
     private static final int PAYMENT_PROCESSOR_REQUEST_CODE = 0x123;
@@ -565,5 +569,10 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
     public void cancelCheckout() {
         overrideTransitionOut();
         exitCheckout(RESULT_CANCELED);
+    }
+
+    @Override
+    public void onLoadingAnimFinished(final boolean success, @NonNull final ViewStylingParams stylingParams) {
+        Log.d("lala", "loading finished");
     }
 }

@@ -3,6 +3,8 @@ package com.mercadopago.android.px.internal.features.onetap.components;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
+import com.mercadolibre.android.ui.widgets.MeliButton;
 import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.configuration.ReviewAndConfirmConfiguration;
 import com.mercadopago.android.px.internal.di.ConfigurationModule;
@@ -101,10 +103,11 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
             }
         };
 
-        final Button button = new ButtonPrimary(new Button.Props(confirm), actions);
+        final ButtonPrimary button = new ButtonPrimary(new Button.Props(confirm), actions);
         final View view = button.render(parent);
         final int resMargin = discount != null ? R.dimen.px_zero_height : R.dimen.px_m_margin;
         ViewUtils.setMarginTopInView(view, parent.getContext().getResources().getDimensionPixelSize(resMargin));
         parent.addView(view);
     }
+
 }

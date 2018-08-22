@@ -74,4 +74,7 @@
     <!-- Animation -->
     <dimen name="px_camera_distance">2560dp</dimen>
 
+    <!-- Exploding button -->
+    <dimen name="px_button_corners_radius">4dp</dimen>
+
 </resources>

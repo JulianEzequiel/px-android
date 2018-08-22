@@ -33,6 +33,9 @@ public interface OneTap {
         void showBusinessResult(final BusinessPayment businessPayment);
 
         void showPaymentResult(final PaymentResult paymentResult);
+
+        void startExplodingLoading();
+
     }
 
     interface Actions {

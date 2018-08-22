@@ -159,4 +159,9 @@
     <color name="px_background_loading">#FFFFFF</color>
     <color name="px_tint_loading">@color/px_main_color</color>
 
+
+    <!-- Exploding button -->
+    <color name="px_order_success_color">#64C574</color>
+    <color name="px_order_success_color_dark">#39b54a</color>
+
 </resources>

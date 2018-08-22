@@ -27,6 +27,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     @Override
     public void confirmPayment() {
         getView().trackConfirm(model);
+        getView().startExplodingLoading();
         paymentRepository.startOneTapPayment(model, this);
     }
 

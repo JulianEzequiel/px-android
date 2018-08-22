@@ -2,28 +2,37 @@ package com.mercadopago.android.px.internal.features.onetap;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
 import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.internal.di.Session;
 import com.mercadopago.android.px.internal.features.CheckoutActivity;
 import com.mercadopago.android.px.internal.features.MercadoPagoComponents;
+import com.mercadopago.android.px.internal.features.onetap.components.ExplodingViewContainer;
+import com.mercadopago.android.px.internal.features.onetap.components.ExplodingViewInfo;
 import com.mercadopago.android.px.internal.features.onetap.components.OneTapContainer;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
 import com.mercadopago.android.px.internal.util.ErrorUtil;
+import com.mercadopago.android.px.internal.view.Button;
+import com.mercadopago.android.px.internal.view.exploding.ViewStylingParams;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.PaymentResult;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
+import com.mercadopago.android.px.internal.view.exploding.ExplodingButtonFragment;
 import java.math.BigDecimal;
 
 import static android.app.Activity.RESULT_CANCELED;
@@ -37,6 +46,11 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private CallBack callback;
     /* default */ OneTapPresenter presenter;
+    private OneTapContainer oneTapContainer;
+    private ExplodingViewContainer explodingViewContainer;
+    private ViewGroup explodingContainer;
+    private ScrollView scrollView;
+    private ExplodingViewInfo explodingViewInfo;
 
     //TODO remove - just for tracking
     private BigDecimal amountToPay;
@@ -81,8 +95,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     @Nullable
     @Override
     public View onCreateView(@NonNull final LayoutInflater inflater,
-                             @Nullable final ViewGroup container,
-                             @Nullable final Bundle savedInstanceState) {
+        @Nullable final ViewGroup container,
+        @Nullable final Bundle savedInstanceState) {
         return inflater.inflate(R.layout.px_onetap_fragment, container, false);
     }
 
@@ -105,7 +119,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     private void trackScreen(final OneTapModel model) {
         if (getActivity() != null) {
             Tracker.trackOneTapScreen(getActivity().getApplicationContext(), model.getPublicKey(),
-                    model.getPaymentMethods().getOneTapMetadata(), amountToPay);
+                model.getPaymentMethods().getOneTapMetadata(), amountToPay);
         }
     }
 
@@ -121,7 +135,27 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         final Toolbar toolbar = view.findViewById(R.id.toolbar);
         container.removeAllViews();
         configureToolbar(toolbar);
-        new OneTapContainer(model, actions).render(container);
+        scrollView = view.findViewById(R.id.scrollView);
+        oneTapContainer = new OneTapContainer(model, actions);
+        oneTapContainer.render(container);
+
+    }
+
+    private void configureExplodingView(final View view) {
+        explodingContainer = view.findViewById(R.id.explodingView);
+        explodingViewInfo = new ExplodingViewInfo(getScrollViewTopCoordinate(), false);
+        explodingViewContainer = new ExplodingViewContainer(explodingViewInfo, getExplodingCallback());
+        View explodingView = explodingViewContainer.render(explodingContainer);
+        explodingContainer.addView(explodingView);
+    }
+
+    private ExplodingViewContainer.Actions getExplodingCallback() {
+        return new ExplodingViewContainer.Actions() {
+            @Override
+            public void onExplodingAnimationFinished() {
+                Log.d("button", "explosion anim finished on fragment");
+            }
+        };
     }
 
     private void configureToolbar(final Toolbar toolbar) {
@@ -168,10 +202,40 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
+    public void startExplodingLoading() {
+
+        //TODO it comes here when the payment has started processing
+        configureExplodingView(getView());
+
+//        final Fragment fragment = new ExplodingButtonFragment();
+//        final Bundle args = new Bundle();
+//        args.putInt(ExplodingButtonFragment.START_Y_KEY, getAnimationY());
+//        Log.d("button", String.valueOf(getAnimationY()));
+//        args.putString(ExplodingButtonFragment.LOADING_TEXT, "Pagando..");
+//        fragment.setArguments(args);
+//
+//        getChildFragmentManager().beginTransaction().add(fragment, ExplodingButtonFragment.TAG).commitNow();
+
+//        ViewStylingParams stylingParams = new ViewStylingParams(R.color.px_order_success_color, R.color.px_order_success_color_dark,
+//            R.drawable.px_ic_buy_success);
+//
+//        ExplodingButtonFragment explodingFragment = (ExplodingButtonFragment) getChildFragmentManager()
+//            .findFragmentByTag(ExplodingButtonFragment.TAG);
+//        explodingFragment.finishLoading(stylingParams);
+
+    }
+
+    private int getScrollViewTopCoordinate() {
+        final Rect scrollBounds = new Rect();
+        scrollView.getDrawingRect(scrollBounds);
+        return scrollBounds.top;
+    }
+
+    @Override
     public void trackConfirm(final OneTapModel model) {
         if (getActivity() != null) {
             Tracker.trackOneTapConfirm(getActivity().getApplicationContext(), model.getPublicKey(),
-                    model.getPaymentMethods().getOneTapMetadata(), amountToPay);
+                model.getPaymentMethods().getOneTapMetadata(), amountToPay);
         }
     }
 
@@ -186,8 +250,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     public void trackModal(final OneTapModel model) {
         if (getActivity() != null) {
             Tracker
-                    .trackOneTapSummaryDetail(getActivity().getApplicationContext(), model.getPublicKey(), hasDiscount,
-                            model.getPaymentMethods().getOneTapMetadata().getCard());
+                .trackOneTapSummaryDetail(getActivity().getApplicationContext(), model.getPublicKey(), hasDiscount,
+                    model.getPaymentMethods().getOneTapMetadata().getCard());
         }
     }
 
@@ -203,11 +267,22 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         }
     }
 
+
+    private void finishAnimation() {
+        Log.d("button", "finish animation from fragment");
+        //TODO prueba: representa cuando terminó de hacerse el pago
+
+        explodingViewInfo.finishAnim();
+        explodingViewContainer.setProps(explodingViewInfo, explodingContainer);
+    }
+
     @Override
     public void showBusinessResult(final BusinessPayment businessPayment) {
         //TODO refactor
         if (getActivity() != null) {
-            ((CheckoutActivity) getActivity()).presenter.onBusinessResult(businessPayment);
+            //TODO fix
+            finishAnimation();
+            //((CheckoutActivity) getActivity()).presenter.onBusinessResult(businessPayment);
         }
     }
 
@@ -215,7 +290,9 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     public void showPaymentResult(final PaymentResult paymentResult) {
         //TODO refactor
         if (getActivity() != null) {
-            ((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
+            //TODO fix
+            finishAnimation();
+            //((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
         }
     }
 

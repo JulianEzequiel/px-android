@@ -7,6 +7,7 @@ import com.mercadopago.android.px.configuration.PaymentConfiguration;
 import com.mercadopago.android.px.core.MercadoPagoCheckout;
 import com.mercadopago.android.px.core.PaymentProcessor;
 import com.mercadopago.android.px.internal.features.plugins.SamplePaymentProcessor;
+import com.mercadopago.android.px.internal.features.plugins.SamplePaymentProcessorWithoutFragment;
 import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.Item;
 import com.mercadopago.android.px.model.Payment;
@@ -112,7 +113,7 @@ public final class OneTapSamples {
     private static MercadoPagoCheckout.Builder startOneTapWithAccountMoneyAndCardsDebitCredit() {
 
         final GenericPayment payment = getGenericPaymentApprovedAccountMoney();
-        final PaymentProcessor samplePaymentProcessor = new SamplePaymentProcessor(payment);
+        final PaymentProcessor samplePaymentProcessor = new SamplePaymentProcessorWithoutFragment(payment);
         final CheckoutPreference preference = getCheckoutPreferenceWithPayerEmail(120);
         return new MercadoPagoCheckout.Builder(ONE_TAP_MERCHANT_PUBLIC_KEY, preference,
             PaymentConfigurationUtils
@@ -146,6 +147,7 @@ public final class OneTapSamples {
             getCheckoutPreferenceWithPayerEmail(excludedPaymentTypes, 120);
         return new MercadoPagoCheckout.Builder(ONE_TAP_MERCHANT_PUBLIC_KEY, checkoutPreferenceWithPayerEmail,
             PaymentConfigurationUtils.createWithPlugin(samplePaymentProcessor))
+
             .setPrivateKey(ONE_TAP_PAYER_2_ACCESS_TOKEN);
     }
 
