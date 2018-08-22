@@ -64,6 +64,7 @@ public class OneTapPresenterTest {
         oneTapPresenter.attachView(view);
     }
 
+    //TODO fix
     @Test
     public void whenConfirmStartPayment() {
 //        configPlugin();
@@ -72,6 +73,16 @@ public class OneTapPresenterTest {
         //TODO fix
 //        verify(paymentRepository).doPayment(model, oneTapPresenter);
         verifyNoMoreInteractions(view);
+    }
+
+    //TODO fix
+    @Test
+    public void whenAnyTokenReceivedThenShowCardPaymentFlow() {
+//        cardConfig();
+        configuration.configure(mock(Token.class));
+        oneTapPresenter.onTokenResolved();
+        //TODO fix
+//        verify(view).showPaymentFlow(any(CardPaymentModel.class));
     }
 
     private void configOther() {
@@ -93,15 +104,6 @@ public class OneTapPresenterTest {
         when(cardMetadata.getId()).thenReturn(CARD_ID);
 
         when(paymentMethodSearch.getIssuer(CARD_ID)).thenReturn(mock(Issuer.class));
-    }
-
-    @Test
-    public void whenAnyTokenReceivedThenShowCardPaymentFlow() {
-//        cardConfig();
-        configuration.configure(mock(Token.class));
-        oneTapPresenter.onTokenResolved();
-        //TODO fix
-//        verify(view).showPaymentFlow(any(CardPaymentModel.class));
     }
 
     @Test
