@@ -16,7 +16,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -26,27 +25,31 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-
-/**
- * Created by mromar on 5/3/17.
- */
 
 @RunWith(MockitoJUnitRunner.class)
 public class IssuersPresenterTest {
 
     private IssuersPresenter presenter;
-    private MockedView mockedView = new MockedView();
+
+    //STUB
+    private MockedView stubView = new MockedView();
     private MockedProvider provider = new MockedProvider();
 
     @Mock
     private UserSelectionRepository userSelectionRepository;
 
+    @Mock
+    private IssuersActivityView mockedView;
+
     @Before
     public void setUp() {
         //Simulation no charge - no discount
         presenter = new IssuersPresenter(userSelectionRepository);
-        presenter.attachView(mockedView);
+        presenter.attachView(stubView);
         presenter.attachResourcesProvider(provider);
     }
 
@@ -61,49 +64,54 @@ public class IssuersPresenterTest {
 
         presenter.initialize();
 
-        mockedView.simulateIssuerSelection(0);
+        stubView.simulateIssuerSelection(0);
 
-        assertTrue(mockedView.issuersShown);
-        assertTrue(mockedView.headerShown);
-        assertEquals(issuers.get(0), mockedView.selectedIssuer);
-        assertTrue(mockedView.finishWithResult);
+        assertTrue(stubView.issuersShown);
+        assertTrue(stubView.headerShown);
+        assertEquals(issuers.get(0), stubView.selectedIssuer);
+        assertTrue(stubView.finishWithResult);
     }
 
-    //TODO fix
-    @Ignore
     @Test
-    public void whenGetIssuersHaveOneIssuerThenFinishWithResult() {
+    public void whenInitIssuersWithNoIssuersAndRetrieveIssuersAndOnlyOneIssuerGivenThenFinish() {
+        //Param for issuer provider
+        final PaymentMethod mockedPaymentMethod = mock(PaymentMethod.class);
+        when(userSelectionRepository.getPaymentMethod()).thenReturn(mockedPaymentMethod);
+
+        //The returned issuer list from provider
         final List<Issuer> issuers = Issuers.getOneIssuerListMLA();
+        presenter = new IssuersPresenter(userSelectionRepository);
         provider.setResponse(issuers);
 
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
+        presenter.attachView(mockedView);
+        presenter.attachResourcesProvider(provider);
 
         presenter.initialize();
 
-        assertFalse(mockedView.issuersShown);
-        assertFalse(mockedView.headerShown);
+        verify(userSelectionRepository).getPaymentMethod();
+        verify(userSelectionRepository).select(issuers.get(0));
+        verify(mockedView).showLoadingView();
+        verify(mockedView).stopLoadingView();
+        verify(mockedView).finishWithResult();
 
-//        assertEquals(userSelectionRepository.getIssuer(), issuers.get(0));
-//        assertEquals(mockedView.selectedIssuer, issuers.get(0));
-        assertTrue(mockedView.finishWithResult);
+        verifyNoMoreInteractions(mockedView);
+        verifyNoMoreInteractions(userSelectionRepository);
     }
 
     @Test
     public void whenIssuersAreNotNullThenShowIssuers() {
         final List<Issuer> issuers = Issuers.getIssuersListMLA();
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
 
         presenter.setIssuers(issuers);
 
         presenter.initialize();
 
-        mockedView.simulateIssuerSelection(0);
+        stubView.simulateIssuerSelection(0);
 
-        assertTrue(mockedView.issuersShown);
-        assertTrue(mockedView.headerShown);
-        assertEquals(issuers.get(0), mockedView.selectedIssuer);
-        assertTrue(mockedView.finishWithResult);
+        assertTrue(stubView.issuersShown);
+        assertTrue(stubView.headerShown);
+        assertEquals(issuers.get(0), stubView.selectedIssuer);
+        assertTrue(stubView.finishWithResult);
     }
 
     @Test
@@ -117,7 +125,7 @@ public class IssuersPresenterTest {
 
         presenter.initialize();
 
-        assertTrue(mockedView.errorShown);
+        assertTrue(stubView.errorShown);
     }
 
     @Test
@@ -131,8 +139,8 @@ public class IssuersPresenterTest {
 
         presenter.initialize();
 
-        assertFalse(mockedView.loadingViewShown);
-        assertTrue(mockedView.errorShown);
+        assertFalse(stubView.loadingViewShown);
+        assertTrue(stubView.errorShown);
     }
 
     @Test
@@ -145,8 +153,8 @@ public class IssuersPresenterTest {
 
         presenter.initialize();
 
-        assertFalse(mockedView.loadingViewShown);
-        assertTrue(mockedView.errorShown);
+        assertFalse(stubView.loadingViewShown);
+        assertTrue(stubView.errorShown);
         assertTrue(provider.emptyIssuersErrorGotten);
     }
 
@@ -163,8 +171,8 @@ public class IssuersPresenterTest {
 
         presenter.recoverFromFailure();
 
-        assertFalse(mockedView.loadingViewShown);
-        assertTrue(mockedView.errorShown);
+        assertFalse(stubView.loadingViewShown);
+        assertTrue(stubView.errorShown);
         assertNotEquals(presenter.getFailureRecovery(), null);
     }
 

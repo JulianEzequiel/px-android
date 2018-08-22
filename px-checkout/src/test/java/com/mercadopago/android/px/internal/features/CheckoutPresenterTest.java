@@ -88,13 +88,13 @@ public class CheckoutPresenterTest {
     @Mock private PluginRepository pluginRepository;
     @Mock private PaymentRepository paymentRepository;
 
-    private MockedView view;
-    private MockedProvider provider;
+    private MockedView stubView;
+    private MockedProvider stubProvider;
 
     @Before
     public void setUp() {
-        view = new MockedView();
-        provider = new MockedProvider();
+        stubView = new MockedView();
+        stubProvider = new MockedProvider();
         when(discountRepository.configureDiscountAutomatically(amountRepository.getAmountToPay()))
             .thenReturn(new StubSuccessMpCall<>(true));
     }
@@ -109,17 +109,17 @@ public class CheckoutPresenterTest {
         final CheckoutPreference preference = stubPreferenceOneItem();
         when(configuration.getCheckoutPreference()).thenReturn(preference);
 
-        provider.setCheckoutPreferenceResponse(preference);
+        stubProvider.setCheckoutPreferenceResponse(preference);
         when(groupsRepository.getGroups())
             .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        return getBasePresenter(view, provider);
+        return getBasePresenter(stubView, stubProvider);
     }
 
     @NonNull
     private CheckoutPresenter getPaymentPresenter() {
         final CheckoutPreference preference = stubPreferenceOneItem();
         when(configuration.getCheckoutPreference()).thenReturn(preference);
-        return getBasePresenter(view, provider);
+        return getBasePresenter(stubView, stubProvider);
     }
 
     @NonNull
@@ -141,42 +141,27 @@ public class CheckoutPresenterTest {
     }
 
     @Test
-    public void whenResolvePaymentErrorVerifyEscManagerCalled() {
-        final PaymentData paymentData = mock(PaymentData.class);
-        final MercadoPagoError error = mock(MercadoPagoError.class);
-        when(checkoutProvider.manageEscForError(error, paymentData)).thenReturn(false);
-        final CheckoutPresenter presenter = getPresenter();
-        presenter.resolvePaymentError(error, paymentData);
-        verify(checkoutProvider).manageEscForError(error, paymentData);
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
     public void whenResolvePaymentErrorEscWasInvalidatedVerifyEscManagerCalledAndRecoveryFlowStarted() {
-        when(configuration.getCheckoutPreference()).thenReturn(stubPreferenceOneItem());
         final PaymentData paymentData = mock(PaymentData.class);
         final MercadoPagoError error = mock(MercadoPagoError.class);
         final Token token = mock(Token.class);
         final Issuer issuer = mock(Issuer.class);
         final PayerCost payerCost = mock(PayerCost.class);
         final PaymentMethod paymentMethod = mock(PaymentMethod.class);
+
+        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
-
+        when(userSelectionRepository.getIssuer()).thenReturn(issuer);
         when(checkoutProvider.manageEscForError(error, paymentData)).thenReturn(true);
+        when(configuration.getToken()).thenReturn(token);
+
         final CheckoutPresenter presenter = getPresenter();
 
-        userSelectionRepository.select(issuer);
-        configuration.configure(token);
-        presenter.onCardFlowResponse();
+        presenter.onPaymentError(error);
 
-        verify(checkoutView).showReviewAndConfirm(false);
-
-        presenter.resolvePaymentError(error, paymentData);
-
+        verify(checkoutView).hideProgress();
         verify(checkoutProvider).manageEscForError(error, paymentData);
-
         verify(checkoutView).startPaymentRecoveryFlow(any(PaymentRecovery.class));
 
         verifyNoMoreInteractions(checkoutProvider);
@@ -184,26 +169,55 @@ public class CheckoutPresenterTest {
     }
 
     @Test
-    public void whenShouldShowPaymentResultVerifyEscManagerCalled() {
+    public void whenPaymentReceivedAndEscManagerResolvesInvalidateEscThenRecoveryFlowStarts() {
         final CheckoutPresenter presenter = getPresenter();
-
+        final IPayment payment = mock(IPayment.class);
         final PaymentData paymentData = mock(PaymentData.class);
+        final Token token = mock(Token.class);
+        final Issuer issuer = mock(Issuer.class);
+        final PayerCost payerCost = mock(PayerCost.class);
+        final PaymentMethod paymentMethod = mock(PaymentMethod.class);
 
         when(paymentRepository.getPaymentData()).thenReturn(paymentData);
+        when(checkoutProvider.manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail())).thenReturn(true);
+        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
+        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
+        when(userSelectionRepository.getIssuer()).thenReturn(issuer);
+        when(configuration.getToken()).thenReturn(token);
 
-        final IPayment iPayment = Payments.create(Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
+        presenter.checkStartPaymentResultActivity(payment);
 
-        when(checkoutProvider.manageEscForPayment(paymentData,
-            iPayment.getPaymentStatus(),
-            iPayment.getPaymentStatusDetail())).thenReturn(false);
+        verify(checkoutProvider)
+            .manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail());
+        verify(checkoutView).startPaymentRecoveryFlow(any(PaymentRecovery.class));
+        verifyNoMoreInteractions(checkoutView);
+        verifyNoMoreInteractions(checkoutProvider);
+    }
 
-        presenter.checkStartPaymentResultActivity(iPayment);
+    @Test
+    public void whenPaymentReceivedAndEscManagerResolvesValidEscThenShowPaymentResult() {
+        final CheckoutPresenter presenter = getPresenter();
+        final IPayment payment = mock(IPayment.class);
+        final PaymentData paymentData = mock(PaymentData.class);
+        final PaymentResult paymentResult = mock(PaymentResult.class);
+        final BigDecimal amountToPay = mock(BigDecimal.class);
+        final Discount discount = mock(Discount.class);
 
-        verify(checkoutProvider).manageEscForPayment(paymentData,
-            iPayment.getPaymentStatus(),
-            iPayment.getPaymentStatusDetail());
+        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
+        when(paymentRepository.createPaymentResult(payment)).thenReturn(paymentResult);
+        when(checkoutProvider
+            .manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail()))
+            .thenReturn(false);
+        when(amountRepository.getAmountToPay()).thenReturn(amountToPay);
+        when(discountRepository.getDiscount()).thenReturn(discount);
 
+        presenter.checkStartPaymentResultActivity(payment);
+
+        verify(checkoutProvider)
+            .manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail());
+        verify(checkoutView).showPaymentResult(paymentResult, amountToPay, discount);
+
+        verifyNoMoreInteractions(checkoutView);
         verifyNoMoreInteractions(checkoutProvider);
     }
 
@@ -237,14 +251,14 @@ public class CheckoutPresenterTest {
 
         final ApiException apiException = Payments.getInvalidESCPayment();
         final MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-        provider.setPaymentResponse(mpException);
+        stubProvider.setPaymentResponse(mpException);
 
         final AdvancedConfiguration advancedConfiguration = new AdvancedConfiguration.Builder()
             .setEscEnabled(true)
             .build();
 
         when(configuration.getAdvancedConfiguration()).thenReturn(advancedConfiguration);
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.initialize();
 
@@ -257,59 +271,22 @@ public class CheckoutPresenterTest {
         //Response from Review And confirm
         presenter.onPaymentConfirmation();
 
-        assertTrue(provider.paymentRequested);
+        assertTrue(stubProvider.paymentRequested);
 
-        provider.paymentRequested = false;
+        stubProvider.paymentRequested = false;
 
-        assertTrue(view.showingPaymentRecoveryFlow);
-        PaymentRecovery paymentRecovery = view.paymentRecoveryRequested;
+        assertTrue(stubView.showingPaymentRecoveryFlow);
+        PaymentRecovery paymentRecovery = stubView.paymentRecoveryRequested;
         assertTrue(paymentRecovery.isStatusDetailInvalidESC());
         assertTrue(paymentRecovery.isTokenRecoverable());
 
         configuration.configure(token);
         //Response from Card Vault with new Token
         presenter.onCardFlowResponse();
-        assertTrue(provider.paymentRequested);
+        assertTrue(stubProvider.paymentRequested);
 
-        provider.setPaymentResponse(Payments.getApprovedPayment());
-        assertNotNull(provider.paymentResponse);
-    }
-
-    @Ignore
-    @Test
-    public void onCreatePaymentWithESCTokenErrorThenDeleteESC() {
-
-        when(groupsRepository.getGroups())
-            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-
-        ApiException apiException = Payments.getInvalidESCPayment();
-        MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-
-        AdvancedConfiguration advancedConfiguration = new AdvancedConfiguration.Builder()
-            .setEscEnabled(true)
-            .build();
-
-        when(configuration.getAdvancedConfiguration()).thenReturn(advancedConfiguration);
-        provider.setPaymentResponse(mpException);
-
-        CheckoutPresenter presenter = getBasePresenter(view, provider);
-
-        presenter.initialize();
-
-        Issuer issuer = Issuers.getIssuers().get(0);
-        Token token = Tokens.getTokenWithESC();
-        Card card = Cards.getCard();
-
-        //Response from payment method selection
-        presenter.onPaymentMethodSelectionResponse(token, card);
-
-        //Response from Review And confirm
-        presenter.onPaymentConfirmation();
-        assertTrue(provider.paymentRequested);
-
-        Cause cause = provider.failedResponse.getApiException().getCause().get(0);
-        assertEquals(cause.getCode(), ApiException.ErrorCodes.INVALID_PAYMENT_WITH_ESC);
-        assertTrue(provider.manageEscRequested);
+        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
+        assertNotNull(stubProvider.paymentResponse);
     }
 
     @Test
@@ -371,26 +348,26 @@ public class CheckoutPresenterTest {
 
     @Test
     public void whenDefaultCardIdValidSelectedThenShowSecurityCode() {
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
         PaymentMethodSearch search = mockPaymentMethodSearchForDriver(true);
         presenter.startFlow(search);
-        assertTrue(view.showingSavedCardFlow);
+        assertTrue(stubView.showingSavedCardFlow);
     }
 
     @Test
     public void whenDefaultCardIdInvalidSelectedThenShowPaymentVault() {
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
         PaymentMethodSearch search = mockPaymentMethodSearchForDriver(false);
         presenter.startFlow(search);
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
     }
 
     @Test
     public void whenDefaultCardIdIsNullAndDefaultPaymentTypeIsValidThenShowNewCardFlow() {
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
         final PaymentMethodSearch search = mockPaymentMethodSearchForNewCardDriver();
         presenter.startFlow(search);
-        assertTrue(view.showingNewCardFlow);
+        assertTrue(stubView.showingNewCardFlow);
     }
 
     @NonNull
@@ -447,10 +424,10 @@ public class CheckoutPresenterTest {
 
         when(configuration.getCheckoutPreference()).thenReturn(preference);
 
-        final CheckoutPresenter checkoutPresenter = getBasePresenter(view, provider);
+        final CheckoutPresenter checkoutPresenter = getBasePresenter(stubView, stubProvider);
         //Real preference, without items
-        provider.setCheckoutPreferenceResponse(preference);
-        provider.setPaymentResponse(Payments.getApprovedPayment());
+        stubProvider.setCheckoutPreferenceResponse(preference);
+        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
 
         final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
         final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
@@ -463,7 +440,7 @@ public class CheckoutPresenterTest {
 
         //Response from Review And confirm
         checkoutPresenter.onPaymentConfirmation();
-        assertTrue(provider.paymentRequested);
+        assertTrue(stubProvider.paymentRequested);
     }
 
     //TODO FIX
@@ -472,7 +449,7 @@ public class CheckoutPresenterTest {
     public void whenPaymentCreatedThenShowResultScreen() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         //Real preference, without items
-        provider.setPaymentResponse(Payments.getApprovedPayment());
+        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
 
         final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
         final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
@@ -485,7 +462,7 @@ public class CheckoutPresenterTest {
 
         //Response from Review And confirm
         presenter.onPaymentConfirmation();
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
     }
 
     //TODO FIX
@@ -494,7 +471,7 @@ public class CheckoutPresenterTest {
     public void onPaymentResultScreenResponseThenFinishWithPaymentResponse() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         final Payment payment = Payments.getApprovedPayment();
-        provider.setPaymentResponse(payment);
+        stubProvider.setPaymentResponse(payment);
 
         presenter.initialize();
 
@@ -507,11 +484,11 @@ public class CheckoutPresenterTest {
         presenter.onPaymentConfirmation();
 
         //On Payment Result Screen
-        assertEquals(view.paymentFinalResponse, null);
+        assertEquals(stubView.paymentFinalResponse, null);
 
         presenter.onPaymentResultResponse();
 
-        assertEquals(view.paymentFinalResponse.getId(), payment.getId());
+        assertEquals(stubView.paymentFinalResponse.getId(), payment.getId());
     }
 
     //TODO FIX
@@ -520,7 +497,7 @@ public class CheckoutPresenterTest {
     public void ifPaymentRecoveryRequiredThenStartPaymentRecoveryFlow() {
         when(groupsRepository.getGroups())
             .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        provider.setPaymentResponse(Payments.getCallForAuthPayment());
+        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
         final CheckoutPresenter presenter = getPaymentPresenter();
         presenter.initialize();
 
@@ -531,12 +508,12 @@ public class CheckoutPresenterTest {
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
 
         presenter.onPaymentMethodSelectionResponse(token, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onPaymentConfirmation();
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
         presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(view.showingPaymentRecoveryFlow);
-        assertEquals(view.paymentRecoveryRequested.getPaymentMethod().getId(), paymentMethod.getId());
+        assertTrue(stubView.showingPaymentRecoveryFlow);
+        assertEquals(stubView.paymentRecoveryRequested.getPaymentMethod().getId(), paymentMethod.getId());
     }
 
     //TODO FIX
@@ -545,7 +522,7 @@ public class CheckoutPresenterTest {
     public void onTokenRecoveryFlowOkResponseThenCreatePayment() {
 
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        provider.setPaymentResponse(Payments.getCallForAuthPayment());
+        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
 
         presenter.initialize();
 
@@ -557,17 +534,17 @@ public class CheckoutPresenterTest {
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
 
         presenter.onPaymentMethodSelectionResponse(token, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onPaymentConfirmation();
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
         presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(view.showingPaymentRecoveryFlow);
-        assertEquals(view.paymentRecoveryRequested.getPaymentMethod().getId(), paymentMethod.getId());
+        assertTrue(stubView.showingPaymentRecoveryFlow);
+        assertEquals(stubView.paymentRecoveryRequested.getPaymentMethod().getId(), paymentMethod.getId());
 
         presenter.onCardFlowResponse();
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
 
-        Assert.assertEquals(paymentMethod.getId(), provider.paymentMethodPaid.getId());
+        Assert.assertEquals(paymentMethod.getId(), stubProvider.paymentMethodPaid.getId());
     }
 
     //TODO FIX
@@ -575,7 +552,7 @@ public class CheckoutPresenterTest {
     @Test
     public void ifPaymentRecoveryRequiredWithInvalidPaymentMethodThenShowError() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        provider.setPaymentResponse(Payments.getCallForAuthPayment());
+        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
 
         presenter.initialize();
         final PaymentMethod paymentMethodOff = PaymentMethods
@@ -583,11 +560,11 @@ public class CheckoutPresenterTest {
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
 
         presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onPaymentConfirmation();
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
         presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(view.showingError);
+        assertTrue(stubView.showingError);
     }
 
     //Backs
@@ -595,9 +572,9 @@ public class CheckoutPresenterTest {
     public void ifCheckoutInitiatedAndUserPressesBackCancelCheckout() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         presenter.initialize();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
         presenter.onPaymentMethodSelectionCancel();
-        assertTrue(view.checkoutCanceled);
+        assertTrue(stubView.checkoutCanceled);
     }
 
     //
@@ -606,11 +583,11 @@ public class CheckoutPresenterTest {
     public void ifReviewAndConfirmShownAndUserPressesBackThenRestartPaymentMethodSelection() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         presenter.initialize();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
         presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onReviewAndConfirmCancel();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
     }
 
     //TODO FIX
@@ -618,44 +595,44 @@ public class CheckoutPresenterTest {
     @Test
     public void ifPaymentRecoveryShownAndUserPressesBackThenRestartPaymentMethodSelection() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        provider.setPaymentResponse(Payments.getCallForAuthPayment());
+        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
         presenter.initialize();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
         final PaymentMethod paymentMethodOnVisa = PaymentMethods.getPaymentMethodOnVisa();
         final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOnVisa);
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
         userSelectionRepository.select(Issuers.getIssuers().get(0));
         presenter.onPaymentMethodSelectionResponse(Tokens.getVisaToken(), null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onPaymentConfirmation();
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
         presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(view.showingPaymentRecoveryFlow);
+        assertTrue(stubView.showingPaymentRecoveryFlow);
         presenter.onCardFlowCancel();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
     }
 
     @Test
     public void ifPaymentMethodEditionRequestedAndUserPressesBackTwiceCancelCheckout() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         presenter.initialize();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
 
         presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
 
         presenter.onChangePaymentMethodFromReviewAndConfirm();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
 
         presenter.onPaymentMethodSelectionCancel();
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
 
         presenter.onReviewAndConfirmCancel();
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
 
         presenter.onPaymentMethodSelectionCancel();
-        assertTrue(view.checkoutCanceled);
+        assertTrue(stubView.checkoutCanceled);
     }
 
     //TODO FIX
@@ -665,7 +642,7 @@ public class CheckoutPresenterTest {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         when(groupsRepository.getGroups())
             .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        provider.setPaymentResponse(Payments.getApprovedPayment());
+        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
 
         presenter.initialize();
         final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
@@ -673,11 +650,11 @@ public class CheckoutPresenterTest {
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
 
         presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onPaymentConfirmation();
 
-        assertTrue(provider.paymentRequested);
-        assertFalse(TextUtil.isEmpty(provider.transactionId));
+        assertTrue(stubProvider.paymentRequested);
+        assertFalse(TextUtil.isEmpty(stubProvider.transactionId));
     }
 
     // TODO CHECK IF WE WILL SUPPORT THIS KIND OF PM requests.
@@ -685,19 +662,19 @@ public class CheckoutPresenterTest {
     @Test
     public void whenCustomerAvailableAndPaymentCreationRequestedThenCreatePaymentWithCustomerId() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        provider.setPaymentResponse(Payments.getApprovedPayment());
-        provider.setCustomerResponse(Customers.getCustomerWithCards());
+        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
+        stubProvider.setCustomerResponse(Customers.getCustomerWithCards());
         presenter.initialize();
 
         //Payment method off, no issuer, installments or token
         final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
         presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(view.showingReviewAndConfirm);
+        assertTrue(stubView.showingReviewAndConfirm);
         presenter.onPaymentConfirmation();
 
-        assertTrue(provider.paymentRequested);
-        assertFalse(TextUtil.isEmpty(provider.paymentCustomerId));
+        assertTrue(stubProvider.paymentRequested);
+        assertFalse(TextUtil.isEmpty(stubProvider.paymentCustomerId));
     }
 
     @Test
@@ -714,12 +691,12 @@ public class CheckoutPresenterTest {
         paymentData.setPayerCost(payerCost);
         paymentData.setToken(token);
 
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_APPROVED,
             Payment.StatusDetail.STATUS_DETAIL_ACCREDITED));
 
-        assertTrue(provider.manageEscRequested);
+        assertTrue(stubProvider.manageEscRequested);
     }
 
     @Test
@@ -736,12 +713,12 @@ public class CheckoutPresenterTest {
         paymentData.setPayerCost(payerCost);
         paymentData.setToken(token);
 
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_APPROVED,
             Payment.StatusDetail.STATUS_DETAIL_ACCREDITED));
 
-        assertTrue(provider.manageEscRequested);
+        assertTrue(stubProvider.manageEscRequested);
     }
 
     @Test
@@ -759,11 +736,11 @@ public class CheckoutPresenterTest {
         paymentData.setPayerCost(payerCost);
         paymentData.setToken(token);
 
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_APPROVED,
             Payment.StatusDetail.STATUS_DETAIL_ACCREDITED));
-        assertTrue(view.showingPaymentResult);
+        assertTrue(stubView.showingPaymentResult);
     }
 
     //Ignored case - the it had sense when review and confirm could be canceled, not anymore.
@@ -773,7 +750,7 @@ public class CheckoutPresenterTest {
 
         final CheckoutPreference checkoutPreference = stubPreferenceOneItem();
 
-        provider.setPaymentResponse(Payments.getApprovedPayment());
+        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
 
         final AdvancedConfiguration advancedConfiguration = new AdvancedConfiguration.Builder()
             .setEscEnabled(true)
@@ -783,7 +760,7 @@ public class CheckoutPresenterTest {
             .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
         when(configuration.getAdvancedConfiguration()).thenReturn(advancedConfiguration);
         when(configuration.getCheckoutPreference()).thenReturn(checkoutPreference);
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.initialize();
 
@@ -799,9 +776,9 @@ public class CheckoutPresenterTest {
         //TODO do payment
 
         //Response from Review And confirm
-        assertTrue(provider.paymentRequested);
-        assertNotNull(provider.paymentResponse);
-        assertTrue(provider.manageEscRequested);
+        assertTrue(stubProvider.paymentRequested);
+        assertNotNull(stubProvider.paymentResponse);
+        assertTrue(stubProvider.manageEscRequested);
     }
 
     @Test
@@ -818,12 +795,12 @@ public class CheckoutPresenterTest {
         paymentData.setToken(token);
         when(paymentRepository.getPaymentData()).thenReturn(paymentData);
 
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_REJECTED,
             Payment.StatusDetail.STATUS_DETAIL_INVALID_ESC));
 
-        assertTrue(provider.manageEscRequested);
+        assertTrue(stubProvider.manageEscRequested);
     }
 
     //TODO FIX
@@ -837,17 +814,17 @@ public class CheckoutPresenterTest {
         identification.setType("cpf");
         identification.setNumber("111");
 
-        provider.setPaymentResponse(Payments.getCallForAuthPayment());
+        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
         final CheckoutPreference preference = stubPreferenceOneItem();
         preference.getPayer().setFirstName(firstName);
         preference.getPayer().setLastName(lastName);
         preference.getPayer().setIdentification(identification);
 
         when(configuration.getCheckoutPreference()).thenReturn(preference);
-        provider.setCheckoutPreferenceResponse(preference);
+        stubProvider.setCheckoutPreferenceResponse(preference);
         when(groupsRepository.getGroups())
             .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
 
         presenter.initialize();
 
@@ -856,11 +833,11 @@ public class CheckoutPresenterTest {
         presenter.onPaymentMethodSelectionResponse(null, null);
         presenter.onPaymentConfirmation();
 
-        assertEquals(provider.payerPosted.getEmail(), preference.getPayer().getEmail());
-        assertEquals(provider.payerPosted.getFirstName(), firstName);
-        assertEquals(provider.payerPosted.getLastName(), lastName);
-        assertEquals(provider.payerPosted.getIdentification().getType(), identification.getType());
-        assertEquals(provider.payerPosted.getIdentification().getNumber(), identification.getNumber());
+        assertEquals(stubProvider.payerPosted.getEmail(), preference.getPayer().getEmail());
+        assertEquals(stubProvider.payerPosted.getFirstName(), firstName);
+        assertEquals(stubProvider.payerPosted.getLastName(), lastName);
+        assertEquals(stubProvider.payerPosted.getIdentification().getType(), identification.getType());
+        assertEquals(stubProvider.payerPosted.getIdentification().getNumber(), identification.getNumber());
     }
 
     //TODO FIX
@@ -869,11 +846,11 @@ public class CheckoutPresenterTest {
     public void ifOnlyPayerFromPreferenceThenUseItForPayment() {
         CheckoutPreference preference = stubPreferenceOneItem();
         when(configuration.getCheckoutPreference()).thenReturn(preference);
-        provider.setCheckoutPreferenceResponse(preference);
+        stubProvider.setCheckoutPreferenceResponse(preference);
         when(groupsRepository.getGroups())
             .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        provider.setPaymentResponse(Payments.getCallForAuthPayment());
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
+        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
+        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
         presenter.initialize();
 
         final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
@@ -881,7 +858,7 @@ public class CheckoutPresenterTest {
         presenter
             .onPaymentMethodSelectionResponse(null, null);
         presenter.onPaymentConfirmation();
-        assertEquals(provider.payerPosted.getEmail(), preference.getPayer().getEmail());
+        assertEquals(stubProvider.payerPosted.getEmail(), preference.getPayer().getEmail());
     }
 
     @Test
@@ -889,12 +866,12 @@ public class CheckoutPresenterTest {
         CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         ApiException apiException = Payments.getInvalidIdentificationPayment();
         MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-        provider.setPaymentResponse(mpException);
+        stubProvider.setPaymentResponse(mpException);
 
         presenter.initialize();
 
         presenter.onErrorCancel(mpException);
-        assertTrue(view.showingPaymentMethodSelection);
+        assertTrue(stubView.showingPaymentMethodSelection);
     }
 
     //TODO FIX
@@ -905,7 +882,7 @@ public class CheckoutPresenterTest {
 
         final ApiException apiException = Payments.getInvalidIdentificationPayment();
         final MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-        provider.setPaymentResponse(mpException);
+        stubProvider.setPaymentResponse(mpException);
 
         presenter.initialize();
 
@@ -922,18 +899,18 @@ public class CheckoutPresenterTest {
 
         //Response from Review And confirm
         presenter.onPaymentConfirmation();
-        assertTrue(provider.paymentRequested);
+        assertTrue(stubProvider.paymentRequested);
 
-        final Cause cause = provider.failedResponse.getApiException().getCause().get(0);
+        final Cause cause = stubProvider.failedResponse.getApiException().getCause().get(0);
         assertEquals(cause.getCode(), ApiException.ErrorCodes.INVALID_IDENTIFICATION_NUMBER);
-        assertTrue(view.showingError);
+        assertTrue(stubView.showingError);
     }
 
     @Test
     public void ifNewFlowThenDoTrackInit() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         presenter.initialize();
-        assertTrue(view.initTracked);
+        assertTrue(stubView.initTracked);
     }
 
     private static class MockedView implements CheckoutView {

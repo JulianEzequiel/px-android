@@ -297,8 +297,7 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
         paymentRepository.startPayment(this);
     }
 
-    @VisibleForTesting
-    void resolvePaymentError(final MercadoPagoError error, final PaymentData paymentData) {
+    private void resolvePaymentError(final MercadoPagoError error, final PaymentData paymentData) {
         final boolean invalidEsc = getResourcesProvider().manageEscForError(error, paymentData);
         if (invalidEsc) {
             continuePaymentWithoutESC();
@@ -313,6 +312,7 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
                 userSelectionRepository.getPayerCost(), userSelectionRepository.getIssuer(),
                 Payment.StatusCodes.STATUS_REJECTED,
                 Payment.StatusDetail.STATUS_DETAIL_INVALID_ESC);
+
         getView().startPaymentRecoveryFlow(state.paymentRecovery);
     }
 
@@ -335,8 +335,8 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
                     .setPaymentStatus(Payment.StatusCodes.STATUS_IN_PROCESS)
                     .setPaymentStatusDetail(Payment.StatusDetail.STATUS_DETAIL_PENDING_CONTINGENCY)
                     .build();
-            getView()
-                .showPaymentResult(paymentResult, amountRepository.getAmountToPay(), discountRepository.getDiscount());
+
+            getView().showPaymentResult(paymentResult, amountRepository.getAmountToPay(), discountRepository.getDiscount());
         } else if (isInternalServerError(mercadoPagoError)) {
             resolveInternalServerError(mercadoPagoError);
         } else if (isBadRequestError(mercadoPagoError)) {
