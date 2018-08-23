@@ -26,6 +26,7 @@ import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPlug
 import com.mercadopago.android.px.internal.tracker.Tracker;
 import com.mercadopago.android.px.internal.util.ErrorUtil;
 import com.mercadopago.android.px.internal.view.Button;
+import com.mercadopago.android.px.internal.view.exploding.StatusBarDecorator;
 import com.mercadopago.android.px.internal.view.exploding.ViewStylingParams;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
@@ -55,6 +56,9 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     //TODO remove - just for tracking
     private BigDecimal amountToPay;
     private boolean hasDiscount;
+
+    private BusinessPayment businessPayment;
+    private PaymentResult paymentResult;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
         final OneTapFragment oneTapFragment = new OneTapFragment();
@@ -154,6 +158,16 @@ public class OneTapFragment extends Fragment implements OneTap.View {
             @Override
             public void onExplodingAnimationFinished() {
                 Log.d("button", "explosion anim finished on fragment");
+                if (businessPayment != null) {
+                    ((CheckoutActivity) getActivity()).presenter.onBusinessResult(businessPayment);
+                } else if (paymentResult != null) {
+                    ((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
+                }
+            }
+
+            @Override
+            public void onStatusBarColorChange(final int primaryColor) {
+                new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(primaryColor);
             }
         };
     }
@@ -281,6 +295,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         //TODO refactor
         if (getActivity() != null) {
             //TODO fix
+            this.businessPayment = businessPayment;
             finishAnimation();
             //((CheckoutActivity) getActivity()).presenter.onBusinessResult(businessPayment);
         }
@@ -291,6 +306,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         //TODO refactor
         if (getActivity() != null) {
             //TODO fix
+            this.paymentResult = paymentResult;
             finishAnimation();
             //((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
         }

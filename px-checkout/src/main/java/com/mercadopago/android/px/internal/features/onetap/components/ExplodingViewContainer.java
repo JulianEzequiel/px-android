@@ -159,7 +159,8 @@ public class ExplodingViewContainer extends CompactComponent<ExplodingViewInfo, 
         Log.d("button", "in transform to icon animation");
         @ColorInt
 //        int color = ContextCompat.getColor(getContext(), viewStylingParams.getDarkPrimaryColor());
-            int color = ContextCompat.getColor(parent.getContext(), R.color.ui_meli_blue);
+            //TODO fix color
+            int color = ContextCompat.getColor(parent.getContext(), R.color.ui_meli_green);
         circle.setColorFilter(color);
         icon.setImageResource(viewStylingParams.getStatusIcon());
 
@@ -282,6 +283,9 @@ public class ExplodingViewContainer extends CompactComponent<ExplodingViewInfo, 
 
                     //TODO fix
 //                    new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(endColor);
+                    if (getActions() != null) {
+                        getActions().onStatusBarColorChange(viewStylingParams.getPrimaryColor());
+                    }
                 }
             }
 
@@ -322,6 +326,7 @@ public class ExplodingViewContainer extends CompactComponent<ExplodingViewInfo, 
 
     public interface Actions {
         void onExplodingAnimationFinished();
+        void onStatusBarColorChange(int primaryColor);
     }
 
 }
