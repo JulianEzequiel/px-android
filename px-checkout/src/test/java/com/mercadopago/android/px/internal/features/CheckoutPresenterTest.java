@@ -441,28 +441,6 @@ public class CheckoutPresenterTest {
     //TODO FIX
     @Ignore
     @Test
-    public void whenPaymentCreatedThenShowResultScreen() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        //Real preference, without items
-        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
-
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        final Token token = Tokens.getVisaToken();
-
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
-        //Response from payment method selection
-        presenter.onPaymentMethodSelectionResponse(token, null);
-
-        //Response from Review And confirm
-        presenter.onPaymentConfirmation();
-        assertTrue(stubView.showingPaymentResult);
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
     public void onPaymentResultScreenResponseThenFinishWithPaymentResponse() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         final Payment payment = Payments.getApprovedPayment();
