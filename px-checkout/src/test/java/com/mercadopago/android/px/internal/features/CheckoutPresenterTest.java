@@ -394,30 +394,15 @@ public class CheckoutPresenterTest {
         verifyNoMoreInteractions(userSelectionRepository);
     }
 
-    //TODO FIX
-    @Ignore
     @Test
-    public void onPaymentResultScreenResponseThenFinishWithPaymentResponse() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        final Payment payment = Payments.getApprovedPayment();
-        stubProvider.setPaymentResponse(payment);
+    public void onPaymentResultScreenResponseThenFinishWithPaymentResult() {
+        final CheckoutPresenter presenter = getPresenter();
+        final Payment payment = mock(Payment.class);
 
-        presenter.initialize();
-
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final Token token = Tokens.getVisaToken();
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        //Response from payment method selection
-        presenter.onPaymentMethodSelectionResponse(token, null);
-
-        presenter.onPaymentConfirmation();
-
-        //On Payment Result Screen
-        assertEquals(stubView.paymentFinalResponse, null);
-
+        presenter.onPaymentFinished(payment);
         presenter.onPaymentResultResponse();
 
-        assertEquals(stubView.paymentFinalResponse.getId(), payment.getId());
+        verify(checkoutView).finishWithPaymentResult(payment);
     }
 
     //TODO FIX
