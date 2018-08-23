@@ -248,50 +248,6 @@ public class CheckoutPresenterTest {
         verifyNoMoreInteractions(checkoutView);
     }
 
-    @Ignore
-    @Test
-    public void onCreatePaymentWithESCTokenErrorThenRequestSecurityCode() {
-
-        final ApiException apiException = Payments.getInvalidESCPayment();
-        final MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-        stubProvider.setPaymentResponse(mpException);
-
-        final AdvancedConfiguration advancedConfiguration = new AdvancedConfiguration.Builder()
-            .setEscEnabled(true)
-            .build();
-
-        when(paymentSettingRepository.getAdvancedConfiguration()).thenReturn(advancedConfiguration);
-        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
-
-        presenter.initialize();
-
-        final Token token = Tokens.getTokenWithESC();
-        final Card card = Cards.getCard();
-
-        //Response from payment method selection
-        presenter.onPaymentMethodSelectionResponse(token, card);
-
-        //Response from Review And confirm
-        presenter.onPaymentConfirmation();
-
-        assertTrue(stubProvider.paymentRequested);
-
-        stubProvider.paymentRequested = false;
-
-        assertTrue(stubView.showingPaymentRecoveryFlow);
-        PaymentRecovery paymentRecovery = stubView.paymentRecoveryRequested;
-        assertTrue(paymentRecovery.isStatusDetailInvalidESC());
-        assertTrue(paymentRecovery.isTokenRecoverable());
-
-        paymentSettingRepository.configure(token);
-        //Response from Card Vault with new Token
-        presenter.onCardFlowResponse();
-        assertTrue(stubProvider.paymentRequested);
-
-        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
-        assertNotNull(stubProvider.paymentResponse);
-    }
-
     @Test
     public void whenChoHasPrefIdSetRetrievePreferenceFromMercadoPago() {
         when(paymentSettingRepository.getCheckoutPreference()).thenReturn(null);
