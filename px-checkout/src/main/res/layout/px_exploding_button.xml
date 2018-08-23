@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:id="@+id/px_loading_buy_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:layout_gravity="center"
+        android:background="@color/ui_meli_blue">
+
+        <ProgressBar
+            android:id="@+id/px_loading_buy_progress"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/px_button_height"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="@dimen/px_m_margin"
+            android:layout_marginRight="@dimen/px_m_margin"
+            android:indeterminate="false"
+            android:progressDrawable="@drawable/px_loading_buy_background"
+            tools:max="100"
+            tools:progress="10"/>
+
+        <TextView
+            android:id="@+id/px_loading_buy_progress_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Pagando..."
+            android:textColor="#ffffff"
+            android:textSize="20sp"/>
+
+        <ImageView
+            android:id="@+id/px_loading_buy_circular"
+            android:layout_width="@dimen/px_button_height"
+            android:layout_height="@dimen/px_button_height"
+            android:layout_centerInParent="true"
+            android:src="@drawable/px_white_circle"
+            android:visibility="gone"
+            tools:tint="#64C574"
+            tools:visibility="visible"
+            />
+
+        <ImageView
+            android:id="@+id/px_loading_buy_icon"
+            android:layout_width="@dimen/px_button_height"
+            android:layout_height="@dimen/px_button_height"
+            android:layout_centerInParent="true"
+            android:visibility="gone"
+            tools:src="@drawable/px_ic_buy_success"
+            tools:visibility="visible"/>
+    </RelativeLayout>
+
+    <View
+        android:id="@+id/px_loading_buy_reveal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+        />
+</merge>

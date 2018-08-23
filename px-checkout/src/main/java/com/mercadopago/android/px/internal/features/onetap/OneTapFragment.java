@@ -26,6 +26,8 @@ import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPlug
 import com.mercadopago.android.px.internal.tracker.Tracker;
 import com.mercadopago.android.px.internal.util.ErrorUtil;
 import com.mercadopago.android.px.internal.view.Button;
+import com.mercadopago.android.px.internal.view.exploding.ExplodingButtonListener;
+import com.mercadopago.android.px.internal.view.exploding.ExplodingButtonView;
 import com.mercadopago.android.px.internal.view.exploding.StatusBarDecorator;
 import com.mercadopago.android.px.internal.view.exploding.ViewStylingParams;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
@@ -48,10 +50,11 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     private CallBack callback;
     /* default */ OneTapPresenter presenter;
     private OneTapContainer oneTapContainer;
-    private ExplodingViewContainer explodingViewContainer;
+//    private ExplodingViewContainer explodingViewContainer;
     private ViewGroup explodingContainer;
     private ScrollView scrollView;
     private ExplodingViewInfo explodingViewInfo;
+    private ExplodingButtonView explodingButtonView;
 
     //TODO remove - just for tracking
     private BigDecimal amountToPay;
@@ -147,14 +150,36 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private void configureExplodingView(final View view) {
         explodingContainer = view.findViewById(R.id.explodingView);
-        explodingViewInfo = new ExplodingViewInfo(getScrollViewTopCoordinate(), false);
-        explodingViewContainer = new ExplodingViewContainer(explodingViewInfo, getExplodingCallback());
-        View explodingView = explodingViewContainer.render(explodingContainer);
-        explodingContainer.addView(explodingView);
+//        explodingViewInfo = new ExplodingViewInfo(getScrollViewTopCoordinate(), false);
+//        explodingViewContainer = new ExplodingViewContainer(explodingViewInfo, getExplodingCallback());
+//        View explodingView = explodingViewContainer.render(explodingContainer);
+//        explodingContainer.addView(explodingView);
+        //TODO agregar params (startY, text)
+        explodingButtonView = new ExplodingButtonView(getContext(), null, 0, getExplodingCallback());
+        explodingContainer.addView(explodingButtonView);
     }
 
-    private ExplodingViewContainer.Actions getExplodingCallback() {
-        return new ExplodingViewContainer.Actions() {
+//    private ExplodingViewContainer.Actions getExplodingCallback() {
+//        return new ExplodingViewContainer.Actions() {
+//            @Override
+//            public void onExplodingAnimationFinished() {
+//                Log.d("button", "explosion anim finished on fragment");
+//                if (businessPayment != null) {
+//                    ((CheckoutActivity) getActivity()).presenter.onBusinessResult(businessPayment);
+//                } else if (paymentResult != null) {
+//                    ((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
+//                }
+//            }
+//
+//            @Override
+//            public void onStatusBarColorChange(final int primaryColor) {
+//                new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(primaryColor);
+//            }
+//        };
+//    }
+
+    private ExplodingButtonListener getExplodingCallback() {
+        return new ExplodingButtonListener() {
             @Override
             public void onExplodingAnimationFinished() {
                 Log.d("button", "explosion anim finished on fragment");
@@ -286,8 +311,12 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         Log.d("button", "finish animation from fragment");
         //TODO prueba: representa cuando terminó de hacerse el pago
 
-        explodingViewInfo.finishAnim();
-        explodingViewContainer.setProps(explodingViewInfo, explodingContainer);
+        ViewStylingParams stylingParams = new ViewStylingParams(R.color.px_order_success_color, R.color.px_order_success_color_dark,
+            R.drawable.px_ic_buy_success);
+        explodingButtonView.finishLoading(stylingParams);
+//        explodingViewInfo.finishAnim();
+//        explodingViewContainer.setProps(explodingViewInfo, explodingContainer);
+
     }
 
     @Override
