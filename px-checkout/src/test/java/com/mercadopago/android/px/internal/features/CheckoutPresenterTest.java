@@ -50,6 +50,7 @@ import com.mercadopago.android.px.preferences.CheckoutPreference;
 import com.mercadopago.android.px.preferences.PaymentPreference;
 import com.mercadopago.android.px.utils.PluginInitializationSuccess;
 import com.mercadopago.android.px.utils.StubSuccessMpCall;
+import com.mercadopago.android.px.viewmodel.mappers.BusinessModelMapper;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -141,7 +142,7 @@ public class CheckoutPresenterTest {
     }
 
     @Test
-    public void whenResolvePaymentErrorEscWasInvalidatedVerifyEscManagerCalledAndRecoveryFlowStarted() {
+    public void whenResolvePaymentErrorEscWasInvalidatedVerifyEscManagerCalledAndRecoveryFlowStarts() {
         final PaymentData paymentData = mock(PaymentData.class);
         final MercadoPagoError error = mock(MercadoPagoError.class);
         final Token token = mock(Token.class);
@@ -190,6 +191,7 @@ public class CheckoutPresenterTest {
         verify(checkoutProvider)
             .manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail());
         verify(checkoutView).startPaymentRecoveryFlow(any(PaymentRecovery.class));
+
         verifyNoMoreInteractions(checkoutView);
         verifyNoMoreInteractions(checkoutProvider);
     }
@@ -224,14 +226,13 @@ public class CheckoutPresenterTest {
     @Test
     public void whenShouldShowBusinessPaymentVerifyEscManagerCalled() {
         final CheckoutPresenter presenter = getPresenter();
-        when(configuration.getCheckoutPreference()).thenReturn(stubPreferenceOneItem());
         final BusinessPayment paymentResult = mock(BusinessPayment.class);
         final PaymentData paymentData = mock(PaymentData.class);
-        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
 
+        when(configuration.getCheckoutPreference()).thenReturn(stubPreferenceOneItem());
+        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
         when(paymentResult.getPaymentStatus()).thenReturn(Payment.StatusCodes.STATUS_APPROVED);
         when(paymentResult.getPaymentStatusDetail()).thenReturn(Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
-
         when(checkoutProvider.manageEscForPayment(paymentData,
             paymentResult.getPaymentStatus(),
             paymentResult.getPaymentStatusDetail())).thenReturn(false);
@@ -242,7 +243,10 @@ public class CheckoutPresenterTest {
             paymentResult.getPaymentStatus(),
             paymentResult.getPaymentStatusDetail());
 
+        verify(checkoutView).showBusinessResult(any(BusinessPaymentModel.class));
+
         verifyNoMoreInteractions(checkoutProvider);
+        verifyNoMoreInteractions(checkoutView);
     }
 
     @Ignore
