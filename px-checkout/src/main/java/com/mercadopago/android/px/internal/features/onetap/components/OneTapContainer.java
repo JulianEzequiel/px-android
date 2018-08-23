@@ -1,6 +1,8 @@
 package com.mercadopago.android.px.internal.features.onetap.components;
 
 import android.content.Context;
+import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ScrollView;
@@ -19,6 +21,8 @@ import com.mercadopago.android.px.internal.view.Button;
 import com.mercadopago.android.px.internal.view.ButtonPrimary;
 import com.mercadopago.android.px.internal.view.CompactComponent;
 import com.mercadopago.android.px.internal.view.TermsAndConditionsComponent;
+import com.mercadopago.android.px.internal.view.exploding.ExplodingButtonListener;
+import com.mercadopago.android.px.internal.view.exploding.ExplodingButtonView;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.Action;
 import com.mercadopago.android.px.model.Campaign;
@@ -95,19 +99,21 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
     }
 
     private void addConfirmButton(final @Nonnull ViewGroup parent, @Nullable final Discount discount) {
-        final String confirm = parent.getContext().getString(R.string.px_confirm);
-        final Button.Actions actions = new Button.Actions() {
-            @Override
-            public void onClick(final Action action) {
-                getActions().confirmPayment();
-            }
-        };
+//        final String confirm = parent.getContext().getString(R.string.px_confirm);
+//        final Button.Actions actions = new Button.Actions() {
+//            @Override
+//            public void onClick(final Action action) {
+//                getActions().confirmPayment();
+//            }
+//        };
+//
+//        final ButtonPrimary button = new ButtonPrimary(new Button.Props(confirm), actions);
+//        final View view = button.render(parent);
+//        final int resMargin = discount != null ? R.dimen.px_zero_height : R.dimen.px_m_margin;
+//        ViewUtils.setMarginTopInView(view, parent.getContext().getResources().getDimensionPixelSize(resMargin));
+//        view.setTag("confirm_button_one_tap");
+//        parent.addView(view);
 
-        final ButtonPrimary button = new ButtonPrimary(new Button.Props(confirm), actions);
-        final View view = button.render(parent);
-        final int resMargin = discount != null ? R.dimen.px_zero_height : R.dimen.px_m_margin;
-        ViewUtils.setMarginTopInView(view, parent.getContext().getResources().getDimensionPixelSize(resMargin));
-        parent.addView(view);
     }
 
 }

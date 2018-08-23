@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/px_loading_buy_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:layout_gravity="center"
-        android:background="@color/ui_meli_blue">
+        android:layout_height="wrap_content">
+
+        <com.mercadolibre.android.ui.widgets.MeliButton
+            android:id="@+id/px_confirm_button_one_tap"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/px_button_height"
+            android:text="@string/px_confirm"
+            android:layout_gravity="center"
+            app:type="actionPrimary"/>
 
         <ProgressBar
             android:id="@+id/px_loading_buy_progress"
@@ -16,20 +23,21 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/px_button_height"
             android:layout_centerInParent="true"
-            android:layout_marginLeft="@dimen/px_m_margin"
-            android:layout_marginRight="@dimen/px_m_margin"
             android:indeterminate="false"
             android:progressDrawable="@drawable/px_loading_buy_background"
             tools:max="100"
-            tools:progress="10"/>
+            tools:progress="10"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/px_loading_buy_progress_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Pagando..."
+            android:text="..."
             android:textColor="#ffffff"
+            android:layout_gravity="center"
             android:textSize="20sp"/>
 
         <ImageView
@@ -40,6 +48,7 @@
             android:src="@drawable/px_white_circle"
             android:visibility="gone"
             tools:tint="#64C574"
+            android:layout_gravity="center"
             tools:visibility="visible"
             />
 
@@ -50,8 +59,9 @@
             android:layout_centerInParent="true"
             android:visibility="gone"
             tools:src="@drawable/px_ic_buy_success"
+            android:layout_gravity="center"
             tools:visibility="visible"/>
-    </RelativeLayout>
+    </FrameLayout>
 
     <View
         android:id="@+id/px_loading_buy_reveal"

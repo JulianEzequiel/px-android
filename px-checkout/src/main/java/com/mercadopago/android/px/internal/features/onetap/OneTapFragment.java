@@ -52,9 +52,11 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     private OneTapContainer oneTapContainer;
 //    private ExplodingViewContainer explodingViewContainer;
     private ViewGroup explodingContainer;
-    private ScrollView scrollView;
-    private ExplodingViewInfo explodingViewInfo;
     private ExplodingButtonView explodingButtonView;
+
+    private ScrollView scrollView;
+//    private ExplodingViewInfo explodingViewInfo;
+//    private ExplodingButtonView explodingButtonView;
 
     //TODO remove - just for tracking
     private BigDecimal amountToPay;
@@ -144,19 +146,24 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         configureToolbar(toolbar);
         scrollView = view.findViewById(R.id.scrollView);
         oneTapContainer = new OneTapContainer(model, actions);
-        oneTapContainer.render(container);
+        View oneTapView = oneTapContainer.render(container);
 
+        configureExplodingView(getView());
     }
 
     private void configureExplodingView(final View view) {
         explodingContainer = view.findViewById(R.id.explodingView);
+
+        explodingButtonView = new ExplodingButtonView(getContext(), null, 0, getExplodingCallback());
+        explodingContainer.addView(explodingButtonView);
+
 //        explodingViewInfo = new ExplodingViewInfo(getScrollViewTopCoordinate(), false);
 //        explodingViewContainer = new ExplodingViewContainer(explodingViewInfo, getExplodingCallback());
 //        View explodingView = explodingViewContainer.render(explodingContainer);
 //        explodingContainer.addView(explodingView);
         //TODO agregar params (startY, text)
-        explodingButtonView = new ExplodingButtonView(getContext(), null, 0, getExplodingCallback());
-        explodingContainer.addView(explodingButtonView);
+//        explodingButtonView = new ExplodingButtonView(getContext(), null, 0, getExplodingCallback());
+//        explodingContainer.addView(explodingButtonView);
     }
 
 //    private ExplodingViewContainer.Actions getExplodingCallback() {
@@ -193,6 +200,32 @@ public class OneTapFragment extends Fragment implements OneTap.View {
             @Override
             public void onStatusBarColorChange(final int primaryColor) {
                 new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(primaryColor);
+            }
+
+            @Override
+            public void onButtonClicked(View button) {
+                Log.d("button", "do something on click");
+
+                int[] locationInWindow = new int[2];
+                button.getLocationInWindow(locationInWindow);
+                int xW = locationInWindow[0];
+                int yW = locationInWindow[1];
+
+                int[] locationInScreen = new int[2];
+                button.getLocationOnScreen(locationInScreen);
+                int xS = locationInScreen[0];
+                int yS = locationInScreen[1];
+
+                Rect r = new Rect();
+                button.getLocalVisibleRect(r);
+                int top = r.top;
+                int botton = r.bottom;
+                final int left = r.left;
+                final int right = r.right;
+
+                Log.d("button", String.valueOf(top));
+
+                presenter.confirmPayment();
             }
         };
     }
@@ -244,7 +277,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     public void startExplodingLoading() {
 
         //TODO it comes here when the payment has started processing
-        configureExplodingView(getView());
+
+//        explodingButtonView.startProgressBarAnimation();
 
 //        final Fragment fragment = new ExplodingButtonFragment();
 //        final Bundle args = new Bundle();
@@ -313,7 +347,9 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
         ViewStylingParams stylingParams = new ViewStylingParams(R.color.px_order_success_color, R.color.px_order_success_color_dark,
             R.drawable.px_ic_buy_success);
-        explodingButtonView.finishLoading(stylingParams);
+
+                explodingButtonView.finishLoading(stylingParams);
+//        explodingButtonView.finishLoading(stylingParams);
 //        explodingViewInfo.finishAnim();
 //        explodingViewContainer.setProps(explodingViewInfo, explodingContainer);
 

@@ -29,6 +29,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import com.mercadolibre.android.ui.widgets.MeliButton;
 import com.mercadopago.android.px.R;
 
 public class ExplodingButtonView extends FrameLayout {
@@ -48,13 +49,14 @@ public class ExplodingButtonView extends FrameLayout {
     private View rootView;
 
     private int startY;
-    private String loadingText;
+//    private String loadingText;
 
     private Boolean closeState;
     private ViewStylingParams viewStylingParams;
 
     private AnimatorListenerAdapter resultAnimFinishListener;
     private ExplodingButtonListener explodingButtonListener;
+    private MeliButton confirmButton;
 
     public ExplodingButtonView(@NonNull final Context context) {
         super(context, null);
@@ -89,24 +91,36 @@ public class ExplodingButtonView extends FrameLayout {
         final FrameLayout.LayoutParams layoutParams =
             new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         setLayoutParams(layoutParams);
-        setClickable(true);
 
-
-        circle = (ImageView) findViewById(R.id.px_loading_buy_circular);
-        icon = (ImageView) findViewById(R.id.px_loading_buy_icon);
+        circle =  findViewById(R.id.px_loading_buy_circular);
+        icon =  findViewById(R.id.px_loading_buy_icon);
         reveal = findViewById(R.id.px_loading_buy_reveal);
-        text = (TextView) findViewById(R.id.px_loading_buy_progress_text);
+        text =  findViewById(R.id.px_loading_buy_progress_text);
         //TODO fix
-        text.setText("text");
+//        text.setText("text");
 
         // set the initial Y to match the button clicked
         View loadingContainer = findViewById(R.id.px_loading_buy_container);
         //TODO fix y coordinate
-        startY = 500;
+        startY = 72;
         loadingContainer.setY(startY);
 
-        progressBar = (ProgressBar) findViewById(R.id.px_loading_buy_progress);
+        progressBar = findViewById(R.id.px_loading_buy_progress);
         progressBar.setMax(MAX_LOADING_TIME);
+        progressBar.setVisibility(GONE);
+        text.setVisibility(GONE);
+
+        confirmButton = findViewById(R.id.px_confirm_button_one_tap);
+        confirmButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if (isAttached()) {
+                    explodingButtonListener.onButtonClicked(v);
+                    startProgressBarAnimation();
+                }
+            }
+        });
+        confirmButton.setVisibility(VISIBLE);
 
         resultAnimFinishListener = new AnimatorListenerAdapter() {
             @Override
@@ -121,10 +135,14 @@ public class ExplodingButtonView extends FrameLayout {
             }
         };
 
-        startProgressBarAnimation();
+        //startProgressBarAnimation();
     }
 
-    private void startProgressBarAnimation() {
+    public void startProgressBarAnimation() {
+        confirmButton.setVisibility(GONE);
+        progressBar.setVisibility(VISIBLE);
+        setClickable(true);
+
         // inital button animation
         // start loading assuming the worst time possible
         animator = ObjectAnimator.ofInt(progressBar, "progress", 0, MAX_LOADING_TIME);
