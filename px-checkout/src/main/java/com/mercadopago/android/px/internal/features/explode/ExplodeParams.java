@@ -1,34 +1,77 @@
 package com.mercadopago.android.px.internal.features.explode;
 
-import android.support.annotation.ColorRes;
-import android.support.annotation.DrawableRes;
+import android.os.Parcel;
+import android.os.Parcelable;
+import java.io.Serializable;
 
-public final class ExplodeParams {
+public class ExplodeParams implements Parcelable, Serializable {
 
-    private final int primaryColor;
-    private final int darkPrimaryColor;
-    private final int statusIcon;
+    private int buttonHeightInPixels;
+    private int buttonLeftRightMarginInPixels;
+    private int yButtonPositionInPixels;
+    private String buttonText;
+    private int paymentTimeout;
 
-    public ExplodeParams(@ColorRes final int primaryColor,
-        @ColorRes final int darkPrimaryColor,
-        @DrawableRes final int statusIcon) {
-        this.primaryColor = primaryColor;
-        this.darkPrimaryColor = darkPrimaryColor;
-        this.statusIcon = statusIcon;
+    public ExplodeParams(final int yButtonPositionInPixels, final int buttonHeightInPixels,
+        final int buttonLeftRightMarginInPixels, final String buttonText, final int paymentTimeout) {
+        this.buttonHeightInPixels = buttonHeightInPixels;
+        this.yButtonPositionInPixels = yButtonPositionInPixels;
+        this.buttonLeftRightMarginInPixels = buttonLeftRightMarginInPixels;
+        this.buttonText = buttonText;
+        this.paymentTimeout = paymentTimeout;
     }
 
-    @ColorRes
-    public int getPrimaryColor() {
-        return primaryColor;
+    protected ExplodeParams(Parcel in) {
+        buttonHeightInPixels = in.readInt();
+        buttonLeftRightMarginInPixels = in.readInt();
+        yButtonPositionInPixels = in.readInt();
+        buttonText = in.readString();
+        paymentTimeout = in.readInt();
     }
 
-    @ColorRes
-    public int getDarkPrimaryColor() {
-        return darkPrimaryColor;
+    public static final Creator<ExplodeParams> CREATOR = new Creator<ExplodeParams>() {
+        @Override
+        public ExplodeParams createFromParcel(Parcel in) {
+            return new ExplodeParams(in);
+        }
+
+        @Override
+        public ExplodeParams[] newArray(int size) {
+            return new ExplodeParams[size];
+        }
+    };
+
+    public int getButtonHeightInPixels() {
+        return buttonHeightInPixels;
     }
 
-    @DrawableRes
-    public int getStatusIcon() {
-        return statusIcon;
+    public int getButtonLeftRightMarginInPixels() {
+        return buttonLeftRightMarginInPixels;
+    }
+
+    public int getyButtonPositionInPixels() {
+        return yButtonPositionInPixels;
+    }
+
+    public String getButtonText() {
+        return buttonText;
+    }
+
+    public int getPaymentTimeout() {
+        return paymentTimeout;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(final Parcel dest, final int flags) {
+        dest.writeInt(buttonHeightInPixels);
+        dest.writeInt(buttonLeftRightMarginInPixels);
+        dest.writeInt(yButtonPositionInPixels);
+        dest.writeString(buttonText);
+        dest.writeInt(paymentTimeout);
     }
 }

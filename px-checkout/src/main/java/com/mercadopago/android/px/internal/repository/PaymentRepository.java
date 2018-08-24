@@ -17,4 +17,6 @@ public interface PaymentRepository {
 
     @NonNull
     PaymentResult createPaymentResult(IPayment genericPayment);
+
+    int getPaymentTimeout();
 }

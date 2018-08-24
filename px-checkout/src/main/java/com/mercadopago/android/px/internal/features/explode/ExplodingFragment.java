@@ -30,6 +30,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import com.mercadopago.android.px.R;
+import com.mercadopago.android.px.internal.util.TextUtil;
 
 public class ExplodingFragment extends Fragment {
 
@@ -37,11 +38,8 @@ public class ExplodingFragment extends Fragment {
         void onAnimationFinished();
     }
 
-    private static final String ARG_Y_POSITION = "ARG_Y_POSITION";
-    private static final String ARG_HEIGHT = "ARG_HEIGHT";
-    private static final String LOADING_TEXT = "ARG_LOADING_TEXT";
+    private static final String ARG_EXPLODING_PARAMS = "ARG_EXPLODING_PARAMS";
 
-    //TODO add loading time payment processor
     private static final int MAX_LOADING_TIME = 20000; // the max loading time in milliseconds
     public static final float ICON_SCALE = 3.0f;
 
@@ -52,17 +50,19 @@ public class ExplodingFragment extends Fragment {
     private View reveal;
     private TextView text;
     private ViewGroup rootView;
-    private int startY;
-    private String loadingText;
 
-    private ExplodeParams explodeParams;
+    private ExplodeDecorator explodeDecorator;
     private int buttonHeight;
+    private int buttonLeftRightMargin;
+    private int yButtonPosition;
+    private String buttonText;
+    //TODO add loading time payment processor
+    private int maxLoadingTime;
 
-    public static ExplodingFragment newInstance(final int yButtonPosition, final int buttonHeight) {
+    public static ExplodingFragment newInstance(final ExplodeParams explodeParams) {
         final ExplodingFragment explodingFragment = new ExplodingFragment();
         final Bundle bundle = new Bundle();
-        bundle.putInt(ARG_Y_POSITION, yButtonPosition);
-        bundle.putInt(ARG_HEIGHT, buttonHeight);
+        bundle.putSerializable(ARG_EXPLODING_PARAMS, explodeParams);
         explodingFragment.setArguments(bundle);
         return explodingFragment;
     }
@@ -72,10 +72,19 @@ public class ExplodingFragment extends Fragment {
         super.onCreate(savedInstanceState);
         final Bundle args = getArguments();
         if (args != null) {
-            startY = args.getInt(ARG_Y_POSITION, 0);
-            buttonHeight = args.getInt(ARG_HEIGHT, 0);
-            //TODO FIX
-            loadingText = args.getString(LOADING_TEXT, "Pagando...");
+            final ExplodeParams explodeParams = (ExplodeParams) args.getSerializable(ARG_EXPLODING_PARAMS);
+            if (explodeParams == null) {
+                yButtonPosition = 0;
+                buttonHeight = (int) getContext().getResources().getDimension(R.dimen.px_m_height);
+                buttonLeftRightMargin = (int) getContext().getResources().getDimension(R.dimen.px_s_margin);
+                maxLoadingTime = MAX_LOADING_TIME;
+            } else {
+                yButtonPosition = explodeParams.getyButtonPositionInPixels();
+                buttonHeight = explodeParams.getButtonHeightInPixels();
+                buttonLeftRightMargin = explodeParams.getButtonLeftRightMarginInPixels();
+                buttonText = explodeParams.getButtonText();
+                maxLoadingTime = explodeParams.getPaymentTimeout();
+            }
         }
     }
 
@@ -88,7 +97,9 @@ public class ExplodingFragment extends Fragment {
         icon = rootView.findViewById(R.id.cho_loading_buy_icon);
         reveal = rootView.findViewById(R.id.cho_loading_buy_reveal);
         text = rootView.findViewById(R.id.cho_loading_buy_progress_text);
-        text.setText(loadingText);
+        if (!TextUtil.isEmpty(buttonText)) {
+            text.setText(buttonText);
+        }
 
         // set the initial Y to match the button clicked
         final View loadingContainer = rootView.findViewById(R.id.cho_loading_buy_container);
@@ -97,16 +108,18 @@ public class ExplodingFragment extends Fragment {
 
         final RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) progressBar.getLayoutParams();
         layoutParams.height = buttonHeight;
+        layoutParams.leftMargin = buttonLeftRightMargin;
+        layoutParams.rightMargin = buttonLeftRightMargin;
         progressBar.setLayoutParams(layoutParams);
         adjustHeight(circle);
         adjustHeight(icon);
-        loadingContainer.setY(startY);
-        progressBar.setMax(MAX_LOADING_TIME);
+        loadingContainer.setY(yButtonPosition);
+        progressBar.setMax(maxLoadingTime);
 
         // start loading assuming the worst time possible
-        animator = ObjectAnimator.ofInt(progressBar, "progress", 0, MAX_LOADING_TIME);
+        animator = ObjectAnimator.ofInt(progressBar, "progress", 0, maxLoadingTime);
         animator.setInterpolator(new LinearInterpolator());
-        animator.setDuration(MAX_LOADING_TIME).start();
+        animator.setDuration(maxLoadingTime).start();
 
         return rootView;
     }
@@ -121,16 +134,16 @@ public class ExplodingFragment extends Fragment {
     /**
      * Notify this view that the loading has finish so as to start the finish anim.
      *
-     * @param explodeParams information about the order result,
+     * @param explodeDecorator information about the order result,
      * useful for styling the view.
      */
-    public void finishLoading(@NonNull final ExplodeParams explodeParams,
+    public void finishLoading(@NonNull final ExplodeDecorator explodeDecorator,
         @NonNull final ExplodingAnimationListener listener) {
-        this.explodeParams = explodeParams;
+        this.explodeDecorator = explodeDecorator;
         // now finish the remaining loading progress
         final int progress = progressBar.getProgress();
         animator.cancel();
-        animator = ObjectAnimator.ofInt(progressBar, "progress", progress, MAX_LOADING_TIME);
+        animator = ObjectAnimator.ofInt(progressBar, "progress", progress, maxLoadingTime);
         animator.setInterpolator(new AccelerateDecelerateInterpolator());
         animator.setDuration(getResources().getInteger(R.integer.px_long_animation_time));
 
@@ -154,9 +167,9 @@ public class ExplodingFragment extends Fragment {
      */
     /* default */ void createResultAnim(final ExplodingAnimationListener listener) {
         @ColorInt
-        final int color = ContextCompat.getColor(getContext(), explodeParams.getDarkPrimaryColor());
+        final int color = ContextCompat.getColor(getContext(), explodeDecorator.getDarkPrimaryColor());
         circle.setColorFilter(color);
-        icon.setImageResource(explodeParams.getStatusIcon());
+        icon.setImageResource(explodeDecorator.getStatusIcon());
         final int duration = getResources().getInteger(R.integer.px_long_animation_time);
         final int initialWidth = progressBar.getWidth();
         final int finalSize = progressBar.getHeight();
@@ -259,7 +272,7 @@ public class ExplodingFragment extends Fragment {
         final float finalRadius = (float) Math.hypot(rootView.getWidth(), rootView.getHeight());
         final int startRadius = buttonHeight / 2;
         final int cx = (progressBar.getLeft() + progressBar.getRight()) / 2;
-        final int cy = (progressBar.getTop() + progressBar.getBottom()) / 2 + startY;
+        final int cy = (progressBar.getTop() + progressBar.getBottom()) / 2 + yButtonPosition;
 
         final Animator anim;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -278,8 +291,8 @@ public class ExplodingFragment extends Fragment {
                     icon.setVisibility(View.GONE);
                     reveal.setVisibility(View.VISIBLE);
 
-                    final int startColor = ContextCompat.getColor(getContext(), explodeParams.getDarkPrimaryColor());
-                    final int endColor = ContextCompat.getColor(getContext(), explodeParams.getPrimaryColor());
+                    final int startColor = ContextCompat.getColor(getContext(), explodeDecorator.getDarkPrimaryColor());
+                    final int endColor = ContextCompat.getColor(getContext(), explodeDecorator.getPrimaryColor());
                     final Drawable[] switchColors =
                         new Drawable[] { new ColorDrawable(startColor), new ColorDrawable(endColor) };
                     TransitionDrawable colorSwitch = new TransitionDrawable(switchColors);

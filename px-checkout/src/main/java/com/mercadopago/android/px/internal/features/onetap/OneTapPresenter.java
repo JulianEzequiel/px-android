@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import com.mercadopago.android.px.internal.base.MvpPresenter;
 import com.mercadopago.android.px.internal.base.ResourcesProvider;
-import com.mercadopago.android.px.internal.features.explode.ExplodeParamsMapper;
+import com.mercadopago.android.px.internal.features.explode.ExplodeDecoratorMapper;
 import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.repository.PaymentRepository;
 import com.mercadopago.android.px.internal.repository.PaymentServiceHandler;
@@ -21,7 +21,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     private static final String TAG = OneTapPresenter.class.getName();
     @NonNull private final OneTapModel model;
     @NonNull private final PaymentRepository paymentRepository;
-    private final ExplodeParamsMapper explodeParamsMapper;
+    private final ExplodeDecoratorMapper explodeDecoratorMapper;
 
     //TODO refactor
     private int yButtonPosition;
@@ -31,7 +31,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
         @NonNull final PaymentRepository paymentRepository) {
         this.model = model;
         this.paymentRepository = paymentRepository;
-        explodeParamsMapper = new ExplodeParamsMapper();
+        explodeDecoratorMapper = new ExplodeDecoratorMapper();
     }
 
     @Override
@@ -41,7 +41,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
         this.yButtonPosition = yButtonPosition;
         this.buttonHeight = buttonHeight;
 
-        getView().startLoadingButton(yButtonPosition, buttonHeight);
+        getView().startLoadingButton(yButtonPosition, buttonHeight, paymentRepository.getPaymentTimeout());
         paymentRepository.startOneTapPayment(model, this);
     }
 
@@ -74,7 +74,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     @Override
     public void onPaymentFinished(@NonNull final Payment payment) {
         if (isViewAttached()) {
-            getView().showLoadingFor(explodeParamsMapper.map(payment),
+            getView().showLoadingFor(explodeDecoratorMapper.map(payment),
                 new ExplodingFragment.ExplodingAnimationListener() {
                     @Override
                     public void onAnimationFinished() {
@@ -93,7 +93,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
         if (isViewAttached()) {
             getView().trackConfirm(model);
-            getView().showLoadingFor(explodeParamsMapper.map(genericPayment),
+            getView().showLoadingFor(explodeDecoratorMapper.map(genericPayment),
                 new ExplodingFragment.ExplodingAnimationListener() {
                     @Override
                     public void onAnimationFinished() {
@@ -112,7 +112,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     public void onPaymentFinished(@NonNull final BusinessPayment businessPayment) {
         if (isViewAttached()) {
             getView().trackConfirm(model);
-            getView().showLoadingFor(explodeParamsMapper.map(businessPayment),
+            getView().showLoadingFor(explodeDecoratorMapper.map(businessPayment),
                 new ExplodingFragment.ExplodingAnimationListener() {
                     @Override
                     public void onAnimationFinished() {

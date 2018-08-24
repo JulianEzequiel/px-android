@@ -170,4 +170,9 @@ public class PaymentService implements PaymentRepository {
             .setPaymentStatusDetail(payment.getPaymentStatusDetail())
             .build();
     }
+
+    @Override
+    public int getPaymentTimeout() {
+        return paymentProcessor.getPaymentTimeout();
+    }
 }

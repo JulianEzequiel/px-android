@@ -15,11 +15,13 @@ import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.internal.di.Session;
 import com.mercadopago.android.px.internal.features.CheckoutActivity;
 import com.mercadopago.android.px.internal.features.MercadoPagoComponents;
+import com.mercadopago.android.px.internal.features.explode.ExplodeDecorator;
 import com.mercadopago.android.px.internal.features.explode.ExplodeParams;
 import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.features.onetap.components.OneTapContainer;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
+import com.mercadopago.android.px.internal.util.ScaleUtil;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
@@ -213,7 +215,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
-    public void showLoadingFor(final ExplodeParams params,
+    public void showLoadingFor(final ExplodeDecorator params,
         final ExplodingFragment.ExplodingAnimationListener explodingAnimationListener) {
         if (explodingFragment != null && explodingFragment.isAdded()) {
             explodingFragment.finishLoading(params, explodingAnimationListener);
@@ -226,8 +228,13 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
-    public void startLoadingButton(final int yButtonPosition, final int buttonHeight) {
-        explodingFragment = ExplodingFragment.newInstance(yButtonPosition, buttonHeight);
+    public void startLoadingButton(final int yButtonPosition, final int buttonHeight, final int paymentTimeout) {
+        final ExplodeParams explodeParams = new ExplodeParams(yButtonPosition, buttonHeight,
+            (int) getContext().getResources().getDimension(R.dimen.px_m_margin),
+            getContext().getResources().getString(R.string.px_processing_payment_button),
+            paymentTimeout);
+
+        explodingFragment = ExplodingFragment.newInstance(explodeParams);
         getChildFragmentManager().beginTransaction()
             .replace(R.id.exploding_frame, explodingFragment)
             .commit();

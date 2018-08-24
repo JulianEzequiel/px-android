@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- one tap -->
+    <!-- One tap -->
     <string name="px_payment_detail_title_modal">Detalle</string>
+    <string name="px_processing_payment_button">Procesando tu pago</string>
 
     <!-- Banks deals -->
     <string name="px_empty_bank_deals">No tienes ninguna promoción disponible</string>

@@ -17,7 +17,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
 public class MercadoPagoPaymentProcessor implements PaymentProcessor {
 
-    private static final int TIMEOUT = 30000;
+    private static final int TIMEOUT = 20000;
 
     @Override
     public int getPaymentTimeout() {
