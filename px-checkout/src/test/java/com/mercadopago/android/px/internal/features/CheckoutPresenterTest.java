@@ -395,7 +395,7 @@ public class CheckoutPresenterTest {
     }
 
     @Test
-    public void onPaymentResultScreenResponseThenFinishWithPaymentResult() {
+    public void whenPaymentResultWithCreatedPaymentThenFinishCheckoutWithPaymentResult() {
         final CheckoutPresenter presenter = getPresenter();
         final Payment payment = mock(Payment.class);
 
@@ -403,6 +403,15 @@ public class CheckoutPresenterTest {
         presenter.onPaymentResultResponse();
 
         verify(checkoutView).finishWithPaymentResult(payment);
+    }
+
+    @Test
+    public void whenPaymentResultWithoutCreatedPaymentThenFinishCheckoutWithoutPaymentResult() {
+        final CheckoutPresenter presenter = getPresenter();
+
+        presenter.onPaymentResultResponse();
+
+        verify(checkoutView).finishWithPaymentResult();
     }
 
     //TODO FIX
