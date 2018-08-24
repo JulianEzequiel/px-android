@@ -144,6 +144,20 @@ public class CheckoutPresenterTest {
         return presenter;
     }
 
+    private void whenFlowHasRecoverableTokenProcess(final Payment payment){
+        final Token token = mock(Token.class);
+        final PaymentMethod paymentMethod = mock(PaymentMethod.class);
+        final PayerCost payerCost = mock(PayerCost.class);
+        final Issuer issuer = mock(Issuer.class);
+
+        when(paymentSettingRepository.getToken()).thenReturn(token);
+        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
+        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
+        when(userSelectionRepository.getIssuer()).thenReturn(issuer);
+        when(payment.getPaymentStatus()).thenReturn(Payment.StatusCodes.STATUS_REJECTED);
+        when(payment.getPaymentStatusDetail()).thenReturn(Payment.StatusDetail.STATUS_DETAIL_CC_REJECTED_CALL_FOR_AUTHORIZE);
+    }
+
     @Test
     public void whenResolvePaymentErrorEscWasInvalidatedVerifyEscManagerCalledAndRecoveryFlowStarts() {
         final PaymentData paymentData = mock(PaymentData.class);
@@ -434,17 +448,8 @@ public class CheckoutPresenterTest {
     public void whenPaymentIsCanceledBecausePaymentRecoveryIsRequiredAndPaymentRecoveryCreationIsValidThenStartPaymentRecoveryFlow() {
         final CheckoutPresenter presenter = getPresenter();
         final Payment payment = mock(Payment.class);
-        final Token token = mock(Token.class);
-        final PaymentMethod paymentMethod = mock(PaymentMethod.class);
-        final PayerCost payerCost = mock(PayerCost.class);
-        final Issuer issuer = mock(Issuer.class);
 
-        when(paymentSettingRepository.getToken()).thenReturn(token);
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
-        when(userSelectionRepository.getIssuer()).thenReturn(issuer);
-        when(payment.getPaymentStatus()).thenReturn(Payment.StatusCodes.STATUS_REJECTED);
-        when(payment.getPaymentStatusDetail()).thenReturn(Payment.StatusDetail.STATUS_DETAIL_CC_REJECTED_CALL_FOR_AUTHORIZE);
+        whenFlowHasRecoverableTokenProcess(payment);
 
         presenter.onPaymentFinished(payment);
 
@@ -463,35 +468,33 @@ public class CheckoutPresenterTest {
         verifyNoMoreInteractions(checkoutView);
     }
 
-    //TODO FIX
-    @Ignore
     @Test
-    public void onTokenRecoveryFlowOkResponseThenCreatePayment() {
+    public void whenCardFlowResponseHasRecoverableTokenProcessThenCreatePayment() {
+        final CheckoutPresenter presenter = getPresenter();
+        final Payment payment = mock(Payment.class);
 
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
+        whenFlowHasRecoverableTokenProcess(payment);
 
-        presenter.initialize();
-
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        final Token token = Tokens.getVisaToken();
-
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
-
-        presenter.onPaymentMethodSelectionResponse(token, null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onPaymentConfirmation();
-        assertTrue(stubView.showingPaymentResult);
+        presenter.onPaymentFinished(payment);
         presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(stubView.showingPaymentRecoveryFlow);
-        assertEquals(stubView.paymentRecoveryRequested.getPaymentMethod().getId(), paymentMethod.getId());
+        presenter.onCardFlowResponse();
+
+        verify(checkoutView).showProgress();
+        verify(paymentRepository).startPayment(presenter);
+    }
+
+    @Test
+    public void whenCardFlowResponseHasNotRecoverableTokenProcessAndThereIsNoAvailableHooksThenShowReviewAndConfirm() {
+        final CheckoutPresenter presenter = getPresenter();
+        final PaymentData paymentData = mock(PaymentData.class);
+        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
 
         presenter.onCardFlowResponse();
-        assertTrue(stubView.showingPaymentResult);
 
-        Assert.assertEquals(paymentMethod.getId(), stubProvider.paymentMethodPaid.getId());
+        verify(paymentRepository).getPaymentData();
+        verify(checkoutView).showReviewAndConfirm(false);
+        verifyNoMoreInteractions(checkoutView);
+        verifyNoMoreInteractions(paymentRepository);
     }
 
     //TODO FIX
