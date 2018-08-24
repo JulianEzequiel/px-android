@@ -15,6 +15,8 @@ import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.internal.di.Session;
 import com.mercadopago.android.px.internal.features.CheckoutActivity;
 import com.mercadopago.android.px.internal.features.MercadoPagoComponents;
+import com.mercadopago.android.px.internal.features.explode.ExplodeParams;
+import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.features.onetap.components.OneTapContainer;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
@@ -35,6 +37,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     private CallBack callback;
 
     /* default */ OneTapPresenter presenter;
+
+    private ExplodingFragment explodingFragment;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
         final OneTapFragment oneTapFragment = new OneTapFragment();
@@ -92,6 +96,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
             presenter.attachView(this);
             trackScreen(model);
         }
+
     }
 
     private void trackScreen(final OneTapModel model) {
@@ -205,6 +210,27 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         if (getActivity() != null) {
             ((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
         }
+    }
+
+    @Override
+    public void showLoadingFor(final ExplodeParams params,
+        final ExplodingFragment.ExplodingAnimationListener explodingAnimationListener) {
+        if (explodingFragment != null && explodingFragment.isAdded()) {
+            explodingFragment.finishLoading(params, explodingAnimationListener);
+        }
+    }
+
+    @Override
+    public void cancelLoading() {
+        getChildFragmentManager().beginTransaction().remove(explodingFragment).commit();
+    }
+
+    @Override
+    public void startLoadingButton(final int yButtonPosition, final int buttonHeight) {
+        explodingFragment = ExplodingFragment.newInstance(yButtonPosition, buttonHeight);
+        getChildFragmentManager().beginTransaction()
+            .replace(R.id.exploding_frame, explodingFragment)
+            .commit();
     }
 
     @Override

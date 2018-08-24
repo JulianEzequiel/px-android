@@ -47,6 +47,11 @@ public class PaymentMethodComponent extends CompactComponent<PaymentModel, Payme
                         getActions().onPaymentMethodChangeClicked();
                     }
                 }
+
+                @Override
+                public void onClick(final int yButtonPosition, final int buttonHeight) {
+                    //Do nothing
+                }
             });
 
             compose(paymentMethodView, buttonLink.render(paymentMethodView));

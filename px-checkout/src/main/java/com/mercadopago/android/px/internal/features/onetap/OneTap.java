@@ -2,6 +2,8 @@ package com.mercadopago.android.px.internal.features.onetap;
 
 import android.support.annotation.NonNull;
 import com.mercadopago.android.px.internal.base.MvpView;
+import com.mercadopago.android.px.internal.features.explode.ExplodeParams;
+import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
@@ -33,11 +35,18 @@ public interface OneTap {
         void showBusinessResult(final BusinessPayment businessPayment);
 
         void showPaymentResult(final IPayment paymentResult);
+
+        void showLoadingFor(final ExplodeParams params,
+            final ExplodingFragment.ExplodingAnimationListener explodingAnimationListener);
+
+        void cancelLoading();
+
+        void startLoadingButton(int yButtonPosition, final int buttonHeight);
     }
 
     interface Actions {
 
-        void confirmPayment();
+        void confirmPayment(int yButtonPosition, final int buttonHeight);
 
         void onTokenResolved();
 

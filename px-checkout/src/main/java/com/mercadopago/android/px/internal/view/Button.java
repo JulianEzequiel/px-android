@@ -12,6 +12,8 @@ public abstract class Button extends CompactComponent<Button.Props, Button.Actio
 
     public interface Actions {
         void onClick(final Action action);
+
+        void onClick(final int yButtonPosition, final int buttonHeight);
     }
 
     public static class Props {
@@ -44,6 +46,7 @@ public abstract class Button extends CompactComponent<Button.Props, Button.Actio
             @Override
             public void onClick(final View v) {
                 getActions().onClick(props.action);
+                getActions().onClick((int) v.getY(), v.getMeasuredHeight());
             }
         });
         return view;

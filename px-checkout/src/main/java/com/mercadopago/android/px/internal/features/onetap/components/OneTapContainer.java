@@ -97,7 +97,12 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         final Button.Actions actions = new Button.Actions() {
             @Override
             public void onClick(final Action action) {
-                getActions().confirmPayment();
+                //Do nothing
+            }
+
+            @Override
+            public void onClick(final int yButtonPosition, final int buttonHeight) {
+                getActions().confirmPayment(yButtonPosition, buttonHeight);
             }
         };
 
