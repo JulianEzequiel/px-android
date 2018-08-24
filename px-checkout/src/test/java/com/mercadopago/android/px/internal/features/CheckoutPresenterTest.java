@@ -2,6 +2,7 @@ package com.mercadopago.android.px.internal.features;
 
 import android.support.annotation.NonNull;
 import com.mercadopago.android.px.configuration.AdvancedConfiguration;
+import com.mercadopago.android.px.core.MercadoPagoCheckout;
 import com.mercadopago.android.px.internal.callbacks.TaggedCallback;
 import com.mercadopago.android.px.internal.features.hooks.Hook;
 import com.mercadopago.android.px.internal.features.providers.CheckoutProvider;
@@ -59,6 +60,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubExpiredPreference;
@@ -78,6 +80,8 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 @RunWith(MockitoJUnitRunner.class)
 public class CheckoutPresenterTest {
 
+    public static final String DEFAULT_CARD_ID = "260077840";
+    public static final String DEBIT_CARD_DEBCABAL = "debcabal";
     @Mock private CheckoutView checkoutView;
     @Mock private CheckoutProvider checkoutProvider;
     @Mock private PaymentSettingRepository paymentSettingRepository;
@@ -361,9 +365,10 @@ public class CheckoutPresenterTest {
         when(paymentSettingRepository.getCheckoutPreference()).thenReturn(checkoutPreference);
         final PaymentPreference paymentPreference = mock(PaymentPreference.class);
         when(checkoutPreference.getPaymentPreference()).thenReturn(paymentPreference);
-        when(paymentSettingRepository.getCheckoutPreference().getPaymentPreference().getDefaultCardId()).thenReturn("260077840");
+        when(paymentSettingRepository.getCheckoutPreference().getPaymentPreference().getDefaultCardId()).thenReturn(
+            DEFAULT_CARD_ID);
         when(paymentSettingRepository.getCheckoutPreference().getPaymentPreference().getDefaultPaymentMethodId())
-            .thenReturn("debcabal");
+            .thenReturn(DEBIT_CARD_DEBCABAL);
         return search;
     }
 
@@ -414,29 +419,48 @@ public class CheckoutPresenterTest {
         verify(checkoutView).finishWithPaymentResult();
     }
 
-    //TODO FIX
-    @Ignore
     @Test
-    public void ifPaymentRecoveryRequiredThenStartPaymentRecoveryFlow() {
-        when(groupsRepository.getGroups())
-            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
-        final CheckoutPresenter presenter = getPaymentPresenter();
-        presenter.initialize();
+    public void whenPaymentIsCanceledBecauseUserWantsToSelectOtherPaymentMethodThenShowPaymentMethodSelection() {
+        final CheckoutPresenter presenter = getPresenter();
 
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        final Token token = Tokens.getVisaToken();
+        presenter.onPaymentResultCancel(PaymentResult.SELECT_OTHER_PAYMENT_METHOD);
+
+        verify(checkoutView).showPaymentMethodSelection();
+        verifyNoMoreInteractions(checkoutView);
+        verifyNoMoreInteractions(checkoutProvider);
+    }
+
+    @Test
+    public void whenPaymentIsCanceledBecausePaymentRecoveryIsRequiredAndPaymentRecoveryCreationIsValidThenStartPaymentRecoveryFlow() {
+        final CheckoutPresenter presenter = getPresenter();
+        final Payment payment = mock(Payment.class);
+        final Token token = mock(Token.class);
+        final PaymentMethod paymentMethod = mock(PaymentMethod.class);
+        final PayerCost payerCost = mock(PayerCost.class);
+        final Issuer issuer = mock(Issuer.class);
+
+        when(paymentSettingRepository.getToken()).thenReturn(token);
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
+        when(userSelectionRepository.getIssuer()).thenReturn(issuer);
+        when(payment.getPaymentStatus()).thenReturn(Payment.StatusCodes.STATUS_REJECTED);
+        when(payment.getPaymentStatusDetail()).thenReturn(Payment.StatusDetail.STATUS_DETAIL_CC_REJECTED_CALL_FOR_AUTHORIZE);
 
-        presenter.onPaymentMethodSelectionResponse(token, null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onPaymentConfirmation();
-        assertTrue(stubView.showingPaymentResult);
+        presenter.onPaymentFinished(payment);
+
         presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(stubView.showingPaymentRecoveryFlow);
-        assertEquals(stubView.paymentRecoveryRequested.getPaymentMethod().getId(), paymentMethod.getId());
+
+        verify(checkoutView).startPaymentRecoveryFlow(any(PaymentRecovery.class));
+    }
+
+    @Test
+    public void whenPaymentIsCanceledBecausePaymentRecoveryIsRequiredButPaymentRecoveryCreationIsNotValidThenShowMercadoPagoError() {
+        final CheckoutPresenter presenter = getPresenter();
+
+        presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
+
+        verify(checkoutView).showError(any(MercadoPagoError.class));
+        verifyNoMoreInteractions(checkoutView);
     }
 
     //TODO FIX
