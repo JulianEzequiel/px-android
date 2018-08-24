@@ -48,10 +48,10 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     private CallBack callback;
     /* default */ OneTapPresenter presenter;
     private OneTapContainer oneTapContainer;
-    private ExplodingViewContainer explodingViewContainer;
+//    private ExplodingViewContainer explodingViewContainer;
     private ViewGroup explodingContainer;
     private ScrollView scrollView;
-    private ExplodingViewInfo explodingViewInfo;
+//    private ExplodingViewInfo explodingViewInfo;
 
     //TODO remove - just for tracking
     private BigDecimal amountToPay;
@@ -147,10 +147,10 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private void configureExplodingView(final View view) {
         explodingContainer = view.findViewById(R.id.explodingView);
-        explodingViewInfo = new ExplodingViewInfo(getScrollViewTopCoordinate(), false);
-        explodingViewContainer = new ExplodingViewContainer(explodingViewInfo, getExplodingCallback());
-        View explodingView = explodingViewContainer.render(explodingContainer);
-        explodingContainer.addView(explodingView);
+//        explodingViewInfo = new ExplodingViewInfo(getScrollViewTopCoordinate(), false);
+//        explodingViewContainer = new ExplodingViewContainer(explodingViewInfo, getExplodingCallback());
+//        View explodingView = explodingViewContainer.render(explodingContainer);
+//        explodingContainer.addView(explodingView);
     }
 
     private ExplodingViewContainer.Actions getExplodingCallback() {
@@ -221,14 +221,13 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         //TODO it comes here when the payment has started processing
         configureExplodingView(getView());
 
-//        final Fragment fragment = new ExplodingButtonFragment();
-//        final Bundle args = new Bundle();
-//        args.putInt(ExplodingButtonFragment.START_Y_KEY, getAnimationY());
-//        Log.d("button", String.valueOf(getAnimationY()));
-//        args.putString(ExplodingButtonFragment.LOADING_TEXT, "Pagando..");
-//        fragment.setArguments(args);
-//
-//        getChildFragmentManager().beginTransaction().add(fragment, ExplodingButtonFragment.TAG).commitNow();
+        final Fragment fragment = new ExplodingButtonFragment();
+        final Bundle args = new Bundle();
+        args.putInt(ExplodingButtonFragment.START_Y_KEY, 500);
+        args.putString(ExplodingButtonFragment.LOADING_TEXT, "..");
+        fragment.setArguments(args);
+
+        getChildFragmentManager().beginTransaction().replace(R.id.explodingView, fragment).commit();
 
 //        ViewStylingParams stylingParams = new ViewStylingParams(R.color.px_order_success_color, R.color.px_order_success_color_dark,
 //            R.drawable.px_ic_buy_success);
@@ -286,8 +285,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         Log.d("button", "finish animation from fragment");
         //TODO prueba: representa cuando terminó de hacerse el pago
 
-        explodingViewInfo.finishAnim();
-        explodingViewContainer.setProps(explodingViewInfo, explodingContainer);
+//        explodingViewInfo.finishAnim();
+//        explodingViewContainer.setProps(explodingViewInfo, explodingContainer);
     }
 
     @Override

@@ -99,23 +99,23 @@ public class ExplodingButtonFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         rootView = (ViewGroup) inflater.inflate(R.layout.px_loading_buy_fragment, container, false);
-//        circle = (ImageView) rootView.findViewById(R.id.px_loading_buy_circular);
-//        icon = (ImageView) rootView.findViewById(R.id.px_loading_buy_icon);
-//        reveal = rootView.findViewById(R.id.px_loading_buy_reveal);
-//        text = (TextView) rootView.findViewById(R.id.px_loading_buy_progress_text);
-//        text.setText(loadingText);
-//
-//        // set the initial Y to match the button clicked
-//        View loadingContainer = rootView.findViewById(R.id.px_loading_buy_container);
-//        loadingContainer.setY(startY);
-//
-//        progressBar = (ProgressBar) rootView.findViewById(R.id.px_loading_buy_progress);
-//        progressBar.setMax(MAX_LOADING_TIME);
-//
-//        // start loading assuming the worst time possible
-//        animator = ObjectAnimator.ofInt(progressBar, "progress", 0, MAX_LOADING_TIME);
-//        animator.setInterpolator(new LinearInterpolator());
-//        animator.setDuration(MAX_LOADING_TIME).start();
+        circle = (ImageView) rootView.findViewById(R.id.px_loading_buy_circular);
+        icon = (ImageView) rootView.findViewById(R.id.px_loading_buy_icon);
+        reveal = rootView.findViewById(R.id.px_loading_buy_reveal);
+        text = (TextView) rootView.findViewById(R.id.px_loading_buy_progress_text);
+        text.setText(loadingText);
+
+        // set the initial Y to match the button clicked
+        View loadingContainer = rootView.findViewById(R.id.px_loading_buy_container);
+        loadingContainer.setY(startY);
+
+        progressBar = (ProgressBar) rootView.findViewById(R.id.px_loading_buy_progress);
+        progressBar.setMax(MAX_LOADING_TIME);
+
+        // start loading assuming the worst time possible
+        animator = ObjectAnimator.ofInt(progressBar, "progress", 0, MAX_LOADING_TIME);
+        animator.setInterpolator(new LinearInterpolator());
+        animator.setDuration(MAX_LOADING_TIME).start();
 
         return rootView;
     }
@@ -170,7 +170,7 @@ public class ExplodingButtonFragment extends Fragment {
     private void createResultAnim() {
         @ColorInt
 //        int color = ContextCompat.getColor(getContext(), viewStylingParams.getDarkPrimaryColor());
-        int color = ContextCompat.getColor(getContext(), R.color.ui_meli_blue);
+        int color = ContextCompat.getColor(getContext(), R.color.ui_meli_green);
         circle.setColorFilter(color);
         icon.setImageResource(viewStylingParams.getStatusIcon());
 
