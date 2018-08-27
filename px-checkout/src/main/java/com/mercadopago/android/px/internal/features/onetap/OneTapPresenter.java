@@ -4,10 +4,10 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import com.mercadopago.android.px.internal.base.MvpPresenter;
 import com.mercadopago.android.px.internal.base.ResourcesProvider;
+import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandler;
 import com.mercadopago.android.px.internal.features.explode.ExplodeParamsMapper;
 import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.repository.PaymentRepository;
-import com.mercadopago.android.px.internal.repository.PaymentServiceHandler;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
@@ -119,7 +119,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                         getView().showPaymentResult(businessPayment);
                     }
                 });
-            getView().showBusinessResult(businessPayment);
         }
     }
 
@@ -149,33 +148,15 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     }
 
     @Override
-    public void onPaymentMethodRequired() {
-        Log.d(TAG, "Should not happen. - onPaymentMethodRequired");
-        cancel();
-    }
-
-    @Override
-    public void onCardError() {
-        Log.d(TAG, "Should not happen. - onCardError");
-        cancel();
-    }
-
-    @Override
-    public void onIssuerRequired() {
-        Log.d(TAG, "Should not happen. - onIssuerRequired");
-        cancel();
-    }
-
-    @Override
-    public void onPayerCostRequired() {
-        Log.d(TAG, "Should not happen. - onPayerCostRequired");
-        cancel();
-    }
-
-    @Override
     public void onTokenRequired() {
         Log.d(TAG, "Should not happen. - onPayerCostRequired");
         cancel();
     }
 
+    @Override
+    public void onRecoverPaymentEscInvalid() {
+        if(isViewAttached()){
+            getView().onRecoverPaymentEscInvalid();
+        }
+    }
 }

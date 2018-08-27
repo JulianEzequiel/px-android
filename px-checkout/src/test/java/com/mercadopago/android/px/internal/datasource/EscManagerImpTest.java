@@ -1,13 +1,12 @@
-package com.mercadopago.android.px.internal.features.providers;
+package com.mercadopago.android.px.internal.datasource;
 
 import android.support.annotation.NonNull;
-import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.model.Cause;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.Token;
 import com.mercadopago.android.px.model.exceptions.ApiException;
-import com.mercadopago.android.px.internal.datasource.MercadoPagoESC;
+import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Before;
@@ -25,14 +24,15 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CheckoutProviderImplTest {
+public class EscManagerImpTest {
+
     @Mock private MercadoPagoESC mercadoPagoESC;
 
-    private CheckoutProviderImpl checkoutProvider;
+    private EscManagerImp escManager;
 
     @Before
     public void setUp() {
-        checkoutProvider = new CheckoutProviderImpl(null, null, null, mercadoPagoESC);
+        escManager = new EscManagerImp(mercadoPagoESC);
     }
 
     @NonNull
@@ -90,7 +90,7 @@ public class CheckoutProviderImplTest {
     @Test
     public void whenManageEscForPaymentHasValidPaymentDataAndIsApproveSavesCardReturnFalse() {
         final PaymentData paymentData = validCardPaymentData();
-        final boolean invalid = checkoutProvider.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_APPROVED,
+        final boolean invalid = escManager.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_APPROVED,
             Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
         verify(mercadoPagoESC).saveESC(paymentData.getToken().getCardId(), paymentData.getToken().getEsc());
         verifyNoMoreInteractions(mercadoPagoESC);
@@ -100,7 +100,7 @@ public class CheckoutProviderImplTest {
     @Test
     public void whenManageEscForPaymentHasValidPaymentDataAndIsRejectedDoNothingReturnFalse() {
         final PaymentData paymentData = validCardPaymentData();
-        final boolean invalid = checkoutProvider.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_REJECTED,
+        final boolean invalid = escManager.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_REJECTED,
             Payment.StatusDetail.STATUS_DETAIL_CC_REJECTED_BAD_FILLED_DATE);
         verify(mercadoPagoESC).deleteESC(paymentData.getToken().getCardId());
         verifyNoMoreInteractions(mercadoPagoESC);
@@ -110,7 +110,7 @@ public class CheckoutProviderImplTest {
     @Test
     public void whenManageEscForPaymentHasValidPaymentDataAndIsRejectedEscInvalidDeleteESCReturnTrue() {
         final PaymentData paymentData = validCardPaymentData();
-        final boolean invalid = checkoutProvider.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_REJECTED,
+        final boolean invalid = escManager.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_REJECTED,
             Payment.StatusDetail.STATUS_DETAIL_INVALID_ESC);
         verify(mercadoPagoESC).deleteESC(paymentData.getToken().getCardId());
         verifyNoMoreInteractions(mercadoPagoESC);
@@ -120,7 +120,7 @@ public class CheckoutProviderImplTest {
     @Test
     public void whenManageEscForPaymentHasNonCardPaymentDataAndIsRejectedDoNothingReturnFalse() {
         final PaymentData paymentData = mock(PaymentData.class);
-        final boolean invalid = checkoutProvider.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_REJECTED,
+        final boolean invalid = escManager.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_REJECTED,
             Payment.StatusDetail.STATUS_DETAIL_INVALID_ESC);
         verifyNoMoreInteractions(mercadoPagoESC);
         assertFalse(invalid);
@@ -129,7 +129,7 @@ public class CheckoutProviderImplTest {
     @Test
     public void whenManageEscForPaymentHasNonCardPaymentDataAndIsApprovedDoNothingReturnFalse() {
         final PaymentData paymentData = mock(PaymentData.class);
-        final boolean invalid = checkoutProvider.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_APPROVED,
+        final boolean invalid = escManager.manageEscForPayment(paymentData, Payment.StatusCodes.STATUS_APPROVED,
             Payment.StatusDetail.STATUS_DETAIL_INVALID_ESC);
         verifyNoMoreInteractions(mercadoPagoESC);
         assertFalse(invalid);
@@ -139,7 +139,7 @@ public class CheckoutProviderImplTest {
     public void whenManageEscForErrorHasCardPaymentDataBadRequestWithCauseInvalidEscDeleteEscAndReturnTrue() {
         final PaymentData paymentData = validCardPaymentData();
         final MercadoPagoError error = escMpError();
-        final boolean invalid = checkoutProvider.manageEscForError(error, paymentData);
+        final boolean invalid = escManager.manageEscForError(error, paymentData);
         verify(mercadoPagoESC).deleteESC(paymentData.getToken().getCardId());
         verifyNoMoreInteractions(mercadoPagoESC);
         assertTrue(invalid);
@@ -149,7 +149,7 @@ public class CheckoutProviderImplTest {
     public void whenManageEscForErrorHasCardPaymentDataBadRequestWithMultipleCauseAndInvalidEscDeleteEscAndReturnTrue() {
         final PaymentData paymentData = validCardPaymentData();
         final MercadoPagoError error = multipleErrorEscMpError();
-        final boolean invalid = checkoutProvider.manageEscForError(error, paymentData);
+        final boolean invalid = escManager.manageEscForError(error, paymentData);
         verify(mercadoPagoESC).deleteESC(paymentData.getToken().getCardId());
         verifyNoMoreInteractions(mercadoPagoESC);
         assertTrue(invalid);
@@ -159,7 +159,7 @@ public class CheckoutProviderImplTest {
     public void whenManageEscForErrorHasCardPaymentDataBadRequestWithNoEscCauseReturnFalse() {
         final PaymentData paymentData = validCardPaymentData();
         final MercadoPagoError error = noEscMpError();
-        final boolean invalid = checkoutProvider.manageEscForError(error, paymentData);
+        final boolean invalid = escManager.manageEscForError(error, paymentData);
         verifyNoMoreInteractions(mercadoPagoESC);
         assertFalse(invalid);
     }
@@ -168,7 +168,7 @@ public class CheckoutProviderImplTest {
     public void whenManageEscForErrorNoCardPaymentDataBadRequestWithNoEscCauseReturnFalse() {
         final PaymentData paymentData = mock(PaymentData.class);
         final MercadoPagoError error = noEscMpError();
-        final boolean invalid = checkoutProvider.manageEscForError(error, paymentData);
+        final boolean invalid = escManager.manageEscForError(error, paymentData);
         verifyNoMoreInteractions(mercadoPagoESC);
         assertFalse(invalid);
     }

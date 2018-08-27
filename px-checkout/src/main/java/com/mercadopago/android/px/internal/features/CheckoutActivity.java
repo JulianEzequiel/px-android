@@ -264,16 +264,15 @@ public class CheckoutActivity extends MercadoPagoBaseActivity implements Checkou
      * @param data intent data that can contains a {@link BusinessPayment}
      */
     private void paymentResultOk(final Intent data) {
-
         if (PaymentProcessorPluginActivity.isBusiness(data)) {
             final BusinessPayment businessPayment = PaymentProcessorPluginActivity.getBusinessPayment(data);
-            presenter.onBusinessResult(businessPayment);
+            presenter.onPaymentFinished(businessPayment);
         } else if (PaymentProcessorPluginActivity.isGeneric(data)) {
             final GenericPayment genericPayment = PaymentProcessorPluginActivity.getGenericPayment(data);
-            presenter.checkStartPaymentResultActivity(genericPayment);
+            presenter.onPaymentFinished(genericPayment);
         } else {
             final Payment payment = PaymentProcessorPluginActivity.getPayment(data);
-            presenter.checkStartPaymentResultActivity(payment);
+            presenter.onPaymentFinished(payment);
         }
     }
 

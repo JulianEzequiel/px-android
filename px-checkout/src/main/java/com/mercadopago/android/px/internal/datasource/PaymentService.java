@@ -3,10 +3,11 @@ package com.mercadopago.android.px.internal.datasource;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import com.mercadopago.android.px.core.PaymentProcessor;
+import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandler;
+import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandlerWrapper;
 import com.mercadopago.android.px.internal.repository.AmountRepository;
 import com.mercadopago.android.px.internal.repository.DiscountRepository;
 import com.mercadopago.android.px.internal.repository.PaymentRepository;
-import com.mercadopago.android.px.internal.repository.PaymentServiceHandler;
 import com.mercadopago.android.px.internal.repository.PaymentSettingRepository;
 import com.mercadopago.android.px.internal.repository.PluginRepository;
 import com.mercadopago.android.px.internal.repository.UserSelectionRepository;
@@ -20,6 +21,7 @@ import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentMethod;
 import com.mercadopago.android.px.model.PaymentResult;
 import com.mercadopago.android.px.model.PaymentTypes;
+import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
 
 public class PaymentService implements PaymentRepository {
@@ -33,6 +35,7 @@ public class PaymentService implements PaymentRepository {
     @NonNull private final Context context;
     @NonNull private final PaymentMethodMapper paymentMethodMapper;
     @NonNull private final CardMapper cardMapper;
+    @NonNull private final MercadoPagoESC mercadoPagoEsc;
 
     public PaymentService(@NonNull final UserSelectionRepository userSelectionRepository,
         @NonNull final PaymentSettingRepository paymentSettingRepository,
@@ -40,8 +43,10 @@ public class PaymentService implements PaymentRepository {
         @NonNull final DiscountRepository discountRepository,
         @NonNull final AmountRepository amountRepository,
         @NonNull final PaymentProcessor paymentProcessor,
-        @NonNull final Context context) {
+        @NonNull final Context context,
+        @NonNull final MercadoPagoESC mercadoPagoESC) {
 
+        mercadoPagoEsc = mercadoPagoESC;
         this.userSelectionRepository = userSelectionRepository;
         this.paymentSettingRepository = paymentSettingRepository;
         this.pluginRepository = pluginRepository;
@@ -84,7 +89,9 @@ public class PaymentService implements PaymentRepository {
 
     @Override
     public void startPayment(@NonNull final PaymentServiceHandler paymentServiceHandler) {
-        checkPaymentMethod(paymentServiceHandler);
+        //Wrapping the callback is important to assure ESC handling.
+        checkPaymentMethod(
+            new PaymentServiceHandlerWrapper(paymentServiceHandler, this, new EscManagerImp(mercadoPagoEsc)));
     }
 
     private void checkPaymentMethod(final PaymentServiceHandler paymentServiceHandler) {
@@ -92,7 +99,7 @@ public class PaymentService implements PaymentRepository {
         if (paymentMethod != null) {
             processPaymentMethod(paymentMethod, paymentServiceHandler);
         } else {
-            paymentServiceHandler.onPaymentMethodRequired();
+            paymentServiceHandler.onPaymentError(getError());
         }
     }
 
@@ -116,10 +123,8 @@ public class PaymentService implements PaymentRepository {
             }
         } else if (userSelectionRepository.getPaymentMethod() != null) {
             //Paying with new card
-            if (userSelectionRepository.getIssuer() == null) {
-                paymentServiceHandler.onIssuerRequired();
-            } else if (userSelectionRepository.getPayerCost() == null) {
-                paymentServiceHandler.onPayerCostRequired();
+            if (userSelectionRepository.getIssuer() == null || userSelectionRepository.getPayerCost() == null) {
+                paymentServiceHandler.onPaymentError(getError());
             } else if (paymentSettingRepository.getToken() == null) {
                 paymentServiceHandler.onTokenRequired();
             } else {
@@ -127,7 +132,7 @@ public class PaymentService implements PaymentRepository {
             }
 
         } else {
-            paymentServiceHandler.onCardError();
+            paymentServiceHandler.onPaymentError(getError());
         }
     }
 
@@ -144,6 +149,12 @@ public class PaymentService implements PaymentRepository {
         }
     }
 
+    /**
+     * Payment data is a dynamic non-mutable object that represents
+     * the payment state of the checkout exp.
+     *
+     * @return payment data at the moment is called.
+     */
     @NonNull
     @Override
     public PaymentData getPaymentData() {
@@ -169,5 +180,9 @@ public class PaymentService implements PaymentRepository {
             .setStatementDescription(payment.getStatementDescription())
             .setPaymentStatusDetail(payment.getPaymentStatusDetail())
             .build();
+    }
+
+    public MercadoPagoError getError() {
+        return new MercadoPagoError("Something went wrong", false);
     }
 }

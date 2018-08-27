@@ -200,7 +200,8 @@ public final class Session extends ApplicationModule
                 configurationModule.getPaymentSettings(),
                 getPluginRepository(), getDiscountRepository(), getAmountRepository(),
                 paymentProcessor,
-                getContext());
+                getContext(),
+                getMercadoPagoESC());
         }
 
         return paymentRepository;

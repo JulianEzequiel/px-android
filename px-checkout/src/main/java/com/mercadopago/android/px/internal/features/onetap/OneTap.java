@@ -5,7 +5,6 @@ import com.mercadopago.android.px.internal.base.MvpView;
 import com.mercadopago.android.px.internal.features.explode.ExplodeParams;
 import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
-import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
@@ -30,18 +29,20 @@ public interface OneTap {
 
         void showPaymentProcessor();
 
-        void showErrorView(@NonNull final MercadoPagoError error);
-
-        void showBusinessResult(final BusinessPayment businessPayment);
-
-        void showPaymentResult(final IPayment paymentResult);
-
         void showLoadingFor(final ExplodeParams params,
             final ExplodingFragment.ExplodingAnimationListener explodingAnimationListener);
 
         void cancelLoading();
 
         void startLoadingButton(int yButtonPosition, final int buttonHeight);
+
+        //TODO shared with Checkout activity
+
+        void showErrorView(@NonNull final MercadoPagoError error);
+
+        void showPaymentResult(@NonNull final IPayment paymentResult);
+
+        void onRecoverPaymentEscInvalid();
     }
 
     interface Actions {
