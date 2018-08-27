@@ -113,6 +113,15 @@ public class CheckoutPresenterTest {
     }
 
     @NonNull
+    private CheckoutPresenter getPaymentPresenterWithOnlyOnePaymentMethod() {
+        final CheckoutPreference preference = stubPreferenceOneItem();
+        when(paymentSettingRepository.getCheckoutPreference()).thenReturn(preference);
+        when(groupsRepository.getGroups())
+            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getPaymentMethodSearchWithOnlyAccountMoneyMLA()));
+        return getPresenter();
+    }
+
+    @NonNull
     private CheckoutPresenter getPaymentPresenter() {
         final CheckoutPreference preference = stubPreferenceOneItem();
         when(paymentSettingRepository.getCheckoutPreference()).thenReturn(preference);
@@ -137,7 +146,7 @@ public class CheckoutPresenterTest {
         return presenter;
     }
 
-    private void whenFlowHasRecoverableTokenProcess(final Payment payment){
+    private void whenFlowHasRecoverableTokenProcess(final Payment payment) {
         final Token token = mock(Token.class);
         final PaymentMethod paymentMethod = mock(PaymentMethod.class);
         final PayerCost payerCost = mock(PayerCost.class);
@@ -148,7 +157,8 @@ public class CheckoutPresenterTest {
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
         when(userSelectionRepository.getIssuer()).thenReturn(issuer);
         when(payment.getPaymentStatus()).thenReturn(Payment.StatusCodes.STATUS_REJECTED);
-        when(payment.getPaymentStatusDetail()).thenReturn(Payment.StatusDetail.STATUS_DETAIL_CC_REJECTED_CALL_FOR_AUTHORIZE);
+        when(payment.getPaymentStatusDetail())
+            .thenReturn(Payment.StatusDetail.STATUS_DETAIL_CC_REJECTED_CALL_FOR_AUTHORIZE);
     }
 
     @Test
@@ -190,7 +200,9 @@ public class CheckoutPresenterTest {
         final PaymentMethod paymentMethod = mock(PaymentMethod.class);
 
         when(paymentRepository.getPaymentData()).thenReturn(paymentData);
-        when(checkoutProvider.manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail())).thenReturn(true);
+        when(checkoutProvider
+            .manageEscForPayment(paymentData, payment.getPaymentStatus(), payment.getPaymentStatusDetail()))
+            .thenReturn(true);
         when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
         when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
         when(userSelectionRepository.getIssuer()).thenReturn(issuer);
@@ -346,7 +358,8 @@ public class CheckoutPresenterTest {
         final CheckoutPreference checkoutPreference = mock(CheckoutPreference.class);
         when(paymentSettingRepository.getCheckoutPreference()).thenReturn(checkoutPreference);
         when(checkoutPreference.getPaymentPreference()).thenReturn(mock(PaymentPreference.class));
-        when(paymentSettingRepository.getCheckoutPreference().getPaymentPreference().getDefaultCardId()).thenReturn(null);
+        when(paymentSettingRepository.getCheckoutPreference().getPaymentPreference().getDefaultCardId())
+            .thenReturn(null);
         when(paymentSettingRepository.getCheckoutPreference().getPaymentPreference().getDefaultPaymentTypeId())
             .thenReturn("debit_card");
         return search;
@@ -500,44 +513,8 @@ public class CheckoutPresenterTest {
         assertTrue(stubView.checkoutCanceled);
     }
 
-    //
-    @Ignore
     @Test
-    public void ifReviewAndConfirmShownAndUserPressesBackThenRestartPaymentMethodSelection() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        presenter.initialize();
-        assertTrue(stubView.showingPaymentMethodSelection);
-        presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onReviewAndConfirmCancel();
-        assertTrue(stubView.showingPaymentMethodSelection);
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
-    public void ifPaymentRecoveryShownAndUserPressesBackThenRestartPaymentMethodSelection() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
-        presenter.initialize();
-        assertTrue(stubView.showingPaymentMethodSelection);
-        final PaymentMethod paymentMethodOnVisa = PaymentMethods.getPaymentMethodOnVisa();
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOnVisa);
-        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
-        userSelectionRepository.select(Issuers.getIssuers().get(0));
-        presenter.onPaymentMethodSelectionResponse(Tokens.getVisaToken(), null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onPaymentConfirmation();
-        assertTrue(stubView.showingPaymentResult);
-        presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(stubView.showingPaymentRecoveryFlow);
-        presenter.onCardFlowCancel();
-        assertTrue(stubView.showingPaymentMethodSelection);
-    }
-
-    @Test
-    public void ifPaymentMethodEditionRequestedAndUserPressesBackTwiceCancelCheckout() {
+    public void whenPaymentMethodEditionIsRequestedAndUserPressesBackTwiceCancelCheckout() {
         final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
         presenter.initialize();
         assertTrue(stubView.showingPaymentMethodSelection);
@@ -558,46 +535,21 @@ public class CheckoutPresenterTest {
         assertTrue(stubView.checkoutCanceled);
     }
 
-    //TODO FIX
-    @Ignore
     @Test
-    public void whenPaymentCreationRequestedThenGenerateTransactionId() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        when(groupsRepository.getGroups())
-            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
+    public void whenReviewAndConfirmCanceledAndOnlyOnePaymentMethodCancelCheckout() {
+        final CheckoutPresenter presenter = getPaymentPresenterWithOnlyOnePaymentMethod();
 
         presenter.initialize();
-        final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
-        //Payment method off, no issuer, installments or token
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
+        presenter.onReviewAndConfirmCancel();
 
-        presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onPaymentConfirmation();
-
-        assertTrue(stubProvider.paymentRequested);
-        assertFalse(TextUtil.isEmpty(stubProvider.transactionId));
+        verify(checkoutView).cancelCheckout();
     }
 
-    // TODO CHECK IF WE WILL SUPPORT THIS KIND OF PM requests.
+    //FIXME ver ifs de reviewAndConfirm en el Presenter.
     @Ignore
     @Test
-    public void whenCustomerAvailableAndPaymentCreationRequestedThenCreatePaymentWithCustomerId() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
-        stubProvider.setCustomerResponse(Customers.getCustomerWithCards());
-        presenter.initialize();
+    public void ifReviewAndConfirmShownAndUserPressesBackThenRestartPaymentMethodSelection() {
 
-        //Payment method off, no issuer, installments or token
-        final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
-        presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onPaymentConfirmation();
-
-        assertTrue(stubProvider.paymentRequested);
-        assertFalse(TextUtil.isEmpty(stubProvider.paymentCustomerId));
     }
 
     @Test
