@@ -3,6 +3,8 @@ package com.mercadopago.android.px.internal.datasource;
 import android.support.annotation.NonNull;
 import com.mercadopago.android.px.internal.repository.EscManager;
 import com.mercadopago.android.px.internal.util.EscUtil;
+import com.mercadopago.android.px.internal.util.TextUtil;
+import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
@@ -12,6 +14,11 @@ public class EscManagerImp implements EscManager {
 
     public EscManagerImp(@NonNull final MercadoPagoESC mercadoPagoESC) {
         this.mercadoPagoESC = mercadoPagoESC;
+    }
+
+    @Override
+    public boolean hasEsc(@NonNull final Card card) {
+        return !TextUtil.isEmpty(mercadoPagoESC.getESC(card.getId()));
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.mercadopago.android.px.internal.features;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import com.mercadopago.android.px.internal.base.MvpPresenter;
 import com.mercadopago.android.px.internal.callbacks.FailureRecovery;
 import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandler;
@@ -706,13 +705,6 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
             }
         });
         resolvePaymentFailure(error);
-    }
-
-    @Override
-    public void onTokenRequired() {
-        //TODO definition
-        Log.d(TAG, "Should not happen. - onTokenRequired");
-        cancelCheckout();
     }
 
     @Override

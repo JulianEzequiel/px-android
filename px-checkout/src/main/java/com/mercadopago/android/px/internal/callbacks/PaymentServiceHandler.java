@@ -18,12 +18,6 @@ public interface PaymentServiceHandler extends PaymentProcessor.OnPaymentListene
     void onVisualPayment();
 
     /**
-     * If payment method is card but it does not have token yet, then this method
-     * will be called.
-     */
-    void onTokenRequired();
-
-    /**
      * If payment was reject by invalid esc this method will be called.
      */
     void onRecoverPaymentEscInvalid();

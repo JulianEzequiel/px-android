@@ -7,9 +7,11 @@ import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandler;
 import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandlerWrapper;
 import com.mercadopago.android.px.internal.repository.AmountRepository;
 import com.mercadopago.android.px.internal.repository.DiscountRepository;
+import com.mercadopago.android.px.internal.repository.EscManager;
 import com.mercadopago.android.px.internal.repository.PaymentRepository;
 import com.mercadopago.android.px.internal.repository.PaymentSettingRepository;
 import com.mercadopago.android.px.internal.repository.PluginRepository;
+import com.mercadopago.android.px.internal.repository.TokenRepository;
 import com.mercadopago.android.px.internal.repository.UserSelectionRepository;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.internal.viewmodel.mappers.CardMapper;
@@ -21,8 +23,11 @@ import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.PaymentMethod;
 import com.mercadopago.android.px.model.PaymentResult;
 import com.mercadopago.android.px.model.PaymentTypes;
+import com.mercadopago.android.px.model.Token;
+import com.mercadopago.android.px.model.exceptions.ApiException;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.preferences.CheckoutPreference;
+import com.mercadopago.android.px.services.Callback;
 
 public class PaymentService implements PaymentRepository {
 
@@ -33,9 +38,10 @@ public class PaymentService implements PaymentRepository {
     @NonNull private final AmountRepository amountRepository;
     @NonNull private final PaymentProcessor paymentProcessor;
     @NonNull private final Context context;
+    @NonNull private final TokenRepository tokenRepository;
     @NonNull private final PaymentMethodMapper paymentMethodMapper;
     @NonNull private final CardMapper cardMapper;
-    @NonNull private final MercadoPagoESC mercadoPagoEsc;
+    @NonNull private final EscManager escManager;
 
     public PaymentService(@NonNull final UserSelectionRepository userSelectionRepository,
         @NonNull final PaymentSettingRepository paymentSettingRepository,
@@ -44,9 +50,10 @@ public class PaymentService implements PaymentRepository {
         @NonNull final AmountRepository amountRepository,
         @NonNull final PaymentProcessor paymentProcessor,
         @NonNull final Context context,
-        @NonNull final MercadoPagoESC mercadoPagoESC) {
+        @NonNull final EscManager escManager,
+        @NonNull final TokenRepository tokenRepository) {
 
-        mercadoPagoEsc = mercadoPagoESC;
+        this.escManager = escManager;
         this.userSelectionRepository = userSelectionRepository;
         this.paymentSettingRepository = paymentSettingRepository;
         this.pluginRepository = pluginRepository;
@@ -54,6 +61,7 @@ public class PaymentService implements PaymentRepository {
         this.amountRepository = amountRepository;
         this.paymentProcessor = paymentProcessor;
         this.context = context;
+        this.tokenRepository = tokenRepository;
         paymentMethodMapper = new PaymentMethodMapper();
         cardMapper = new CardMapper();
     }
@@ -91,7 +99,7 @@ public class PaymentService implements PaymentRepository {
     public void startPayment(@NonNull final PaymentServiceHandler paymentServiceHandler) {
         //Wrapping the callback is important to assure ESC handling.
         checkPaymentMethod(
-            new PaymentServiceHandlerWrapper(paymentServiceHandler, this, new EscManagerImp(mercadoPagoEsc)));
+            new PaymentServiceHandlerWrapper(paymentServiceHandler, this, escManager));
     }
 
     private void checkPaymentMethod(final PaymentServiceHandler paymentServiceHandler) {
@@ -106,45 +114,70 @@ public class PaymentService implements PaymentRepository {
     private void processPaymentMethod(final PaymentMethod paymentMethod,
         final PaymentServiceHandler paymentServiceHandler) {
         if (PaymentTypes.isCardPaymentType(paymentMethod.getPaymentTypeId())) {
-            validateCardInfo(paymentServiceHandler);
+            payWithCard(paymentServiceHandler);
         } else {
-            createPayment(paymentServiceHandler);
+            pay(paymentServiceHandler);
         }
     }
 
-    private void validateCardInfo(final PaymentServiceHandler paymentServiceHandler) {
-        //TODO improve
-        if (userSelectionRepository.hasCardSelected() && userSelectionRepository.getPayerCost() != null) {
-            //Paying with saved card
-            if (paymentSettingRepository.getToken() != null) {
-                createPayment(paymentServiceHandler);
-            } else {
-                paymentServiceHandler.onCvvRequired(userSelectionRepository.getCard());
+    private void payWithCard(final PaymentServiceHandler paymentServiceHandler) {
+        if (hasValidSavedCardInfo()) {
+            if (paymentSettingRepository.getToken() != null) { // Paying with saved card with token
+                pay(paymentServiceHandler);
+            } else { // Token does not exists - must generate one or ask for CVV.
+                checkEscAvailability(paymentServiceHandler);
             }
-        } else if (userSelectionRepository.getPaymentMethod() != null) {
-            //Paying with new card
-            if (userSelectionRepository.getIssuer() == null || userSelectionRepository.getPayerCost() == null) {
-                paymentServiceHandler.onPaymentError(getError());
-            } else if (paymentSettingRepository.getToken() == null) {
-                paymentServiceHandler.onTokenRequired();
-            } else {
-                createPayment(paymentServiceHandler);
-            }
-
-        } else {
+        } else if (hasValidNewCardInfo()) { // New card payment
+            pay(paymentServiceHandler);
+        } else { // Guessing card could not tokenize or obtain card information.
             paymentServiceHandler.onPaymentError(getError());
         }
     }
 
-    private void createPayment(final PaymentServiceHandler paymentServiceHandler) {
+    private void checkEscAvailability(final PaymentServiceHandler paymentServiceHandler) {
+        //Paying with saved card without token
+        final Card card = userSelectionRepository.getCard();
 
+        if (escManager.hasEsc(card)) {
+            //Saved card has ESC - Try to tokenize
+            tokenRepository.createToken(card).enqueue(new Callback<Token>() {
+                @Override
+                public void success(final Token token) {
+                    checkPaymentMethod(paymentServiceHandler);
+                }
+
+                @Override
+                public void failure(final ApiException apiException) {
+                    //Start CVV screen if fail
+                    paymentServiceHandler.onCvvRequired(card);
+                }
+            });
+
+        } else {
+            //Saved card has no ESC saved - CVV is requiered.
+            paymentServiceHandler.onCvvRequired(card);
+        }
+    }
+
+    private boolean hasValidSavedCardInfo() {
+        return userSelectionRepository.hasCardSelected()
+            && userSelectionRepository.getPayerCost() != null;
+    }
+
+    private boolean hasValidNewCardInfo() {
+        return userSelectionRepository.getPaymentMethod() != null
+            && userSelectionRepository.getIssuer() != null
+            && userSelectionRepository.getPayerCost() != null
+            && paymentSettingRepository.getToken() != null;
+    }
+
+    private void pay(final PaymentServiceHandler paymentServiceHandler) {
         if (paymentProcessor.shouldShowFragmentOnPayment()) {
             paymentServiceHandler.onVisualPayment();
         } else {
             final CheckoutPreference checkoutPreference = paymentSettingRepository.getCheckoutPreference();
             final PaymentProcessor.CheckoutData checkoutData =
                 new PaymentProcessor.CheckoutData(getPaymentData(), checkoutPreference);
-
             paymentProcessor.startPayment(checkoutData, context, paymentServiceHandler);
         }
     }
@@ -172,7 +205,8 @@ public class PaymentService implements PaymentRepository {
 
     @NonNull
     @Override
-    public PaymentResult createPaymentResult(@NonNull final IPayment payment) {
+    public PaymentResult createPaymentResult(
+        @NonNull final IPayment payment) {
         return new PaymentResult.Builder()
             .setPaymentData(getPaymentData())
             .setPaymentId(payment.getId())

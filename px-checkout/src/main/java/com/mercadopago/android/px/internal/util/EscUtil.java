@@ -4,8 +4,8 @@ import android.support.annotation.Nullable;
 import com.mercadopago.android.px.model.Cause;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.PaymentData;
-import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.model.exceptions.ApiException;
+import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import java.util.List;
 
 public final class EscUtil {
@@ -52,5 +52,19 @@ public final class EscUtil {
             }
         }
         return false;
+    }
+
+    public static boolean isInvalidEscForApiException(final ApiException apiException) {
+        boolean invalidEsc = false;
+        if (apiException.getStatus() == ApiUtil.StatusCodes.BAD_REQUEST) {
+            final List<Cause> causes = apiException.getCause();
+            if (causes != null && !causes.isEmpty()) {
+                for (final Cause cause : causes) {
+                    invalidEsc = ApiException.ErrorCodes.INVALID_ESC.equals(cause.getCode()) ||
+                        ApiException.ErrorCodes.INVALID_FINGERPRINT.equals(cause.getCode());
+                }
+            }
+        }
+        return invalidEsc;
     }
 }

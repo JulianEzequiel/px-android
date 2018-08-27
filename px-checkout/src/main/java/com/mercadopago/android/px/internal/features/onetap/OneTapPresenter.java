@@ -1,7 +1,6 @@
 package com.mercadopago.android.px.internal.features.onetap;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 import com.mercadopago.android.px.internal.base.MvpPresenter;
 import com.mercadopago.android.px.internal.base.ResourcesProvider;
 import com.mercadopago.android.px.internal.callbacks.PaymentServiceHandler;
@@ -36,7 +35,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
     @Override
     public void confirmPayment(final int yButtonPosition, final int buttonHeight) {
-
+        getView().trackConfirm(model);
         //TODO persist this data.
         this.yButtonPosition = yButtonPosition;
         this.buttonHeight = buttonHeight;
@@ -92,7 +91,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     @Override
     public void onPaymentFinished(@NonNull final GenericPayment genericPayment) {
         if (isViewAttached()) {
-            getView().trackConfirm(model);
             getView().showLoadingFor(explodeParamsMapper.map(genericPayment),
                 new ExplodingFragment.ExplodingAnimationListener() {
                     @Override
@@ -111,7 +109,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
     @Override
     public void onPaymentFinished(@NonNull final BusinessPayment businessPayment) {
         if (isViewAttached()) {
-            getView().trackConfirm(model);
             getView().showLoadingFor(explodeParamsMapper.map(businessPayment),
                 new ExplodingFragment.ExplodingAnimationListener() {
                     @Override
@@ -145,12 +142,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
             getView().cancelLoading();
             getView().showCardFlow(model, card);
         }
-    }
-
-    @Override
-    public void onTokenRequired() {
-        Log.d(TAG, "Should not happen. - onPayerCostRequired");
-        cancel();
     }
 
     @Override

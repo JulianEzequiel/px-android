@@ -58,13 +58,6 @@ public class PaymentServiceHandlerWrapperTest {
     }
 
     @Test
-    public void whenOnTokenRequiredVerifyOnTokenRequired() {
-        paymentServiceHandlerWrapper.onTokenRequired();
-        verify(wrapped).onTokenRequired();
-        noMoreInteractions();
-    }
-
-    @Test
     public void whenRecoverPaymentEscInvalidVerifyRecoverPaymentEscInvalid() {
         paymentServiceHandlerWrapper.onRecoverPaymentEscInvalid();
         verify(wrapped).onRecoverPaymentEscInvalid();

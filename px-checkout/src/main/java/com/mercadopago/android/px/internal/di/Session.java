@@ -10,12 +10,14 @@ import com.mercadopago.android.px.internal.datasource.AmountService;
 import com.mercadopago.android.px.internal.datasource.DiscountApiService;
 import com.mercadopago.android.px.internal.datasource.DiscountServiceImp;
 import com.mercadopago.android.px.internal.datasource.DiscountStorageService;
+import com.mercadopago.android.px.internal.datasource.EscManagerImp;
 import com.mercadopago.android.px.internal.datasource.GroupsService;
 import com.mercadopago.android.px.internal.datasource.InstallmentService;
 import com.mercadopago.android.px.internal.datasource.MercadoPagoESCImpl;
 import com.mercadopago.android.px.internal.datasource.MercadoPagoServicesAdapter;
 import com.mercadopago.android.px.internal.datasource.PaymentService;
 import com.mercadopago.android.px.internal.datasource.PluginService;
+import com.mercadopago.android.px.internal.datasource.TokenizeService;
 import com.mercadopago.android.px.internal.datasource.cache.GroupsCache;
 import com.mercadopago.android.px.internal.datasource.cache.GroupsCacheCoordinator;
 import com.mercadopago.android.px.internal.datasource.cache.GroupsDiskCache;
@@ -26,8 +28,10 @@ import com.mercadopago.android.px.internal.repository.GroupsRepository;
 import com.mercadopago.android.px.internal.repository.PaymentRepository;
 import com.mercadopago.android.px.internal.repository.PaymentSettingRepository;
 import com.mercadopago.android.px.internal.repository.PluginRepository;
+import com.mercadopago.android.px.internal.repository.TokenRepository;
 import com.mercadopago.android.px.internal.repository.UserSelectionRepository;
 import com.mercadopago.android.px.internal.services.CheckoutService;
+import com.mercadopago.android.px.internal.services.GatewayService;
 import com.mercadopago.android.px.internal.util.LocaleUtil;
 import com.mercadopago.android.px.internal.util.TextUtil;
 
@@ -201,9 +205,17 @@ public final class Session extends ApplicationModule
                 getPluginRepository(), getDiscountRepository(), getAmountRepository(),
                 paymentProcessor,
                 getContext(),
-                getMercadoPagoESC());
+                new EscManagerImp(getMercadoPagoESC()),
+                getTokenRepository());
         }
 
         return paymentRepository;
+    }
+
+    @NonNull
+    private TokenRepository getTokenRepository() {
+        return new TokenizeService(getRetrofitClient().create(GatewayService.class),
+            getConfigurationModule().getPaymentSettings(),
+            getMercadoPagoESC());
     }
 }

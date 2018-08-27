@@ -1,9 +1,19 @@
 package com.mercadopago.android.px.internal.repository;
 
+import android.support.annotation.NonNull;
+import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
 public interface EscManager {
+
+    /**
+     * Verify if exists ESC saved for certain card.
+     *
+     * @param card your card
+     * @return true if has ESC, false otherwise.
+     */
+    boolean hasEsc(@NonNull final Card card);
 
     /**
      * Resolve ESC for transaction - delete it if needed

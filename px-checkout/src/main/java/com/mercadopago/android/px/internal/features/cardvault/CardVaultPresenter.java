@@ -10,10 +10,10 @@ import com.mercadopago.android.px.internal.repository.AmountRepository;
 import com.mercadopago.android.px.internal.repository.PaymentSettingRepository;
 import com.mercadopago.android.px.internal.repository.UserSelectionRepository;
 import com.mercadopago.android.px.internal.util.ApiUtil;
+import com.mercadopago.android.px.internal.util.EscUtil;
 import com.mercadopago.android.px.internal.util.TextUtil;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.CardInfo;
-import com.mercadopago.android.px.model.Cause;
 import com.mercadopago.android.px.model.DifferentialPricing;
 import com.mercadopago.android.px.model.Installment;
 import com.mercadopago.android.px.model.Issuer;
@@ -22,7 +22,6 @@ import com.mercadopago.android.px.model.PaymentMethod;
 import com.mercadopago.android.px.model.PaymentRecovery;
 import com.mercadopago.android.px.model.SavedESCCardToken;
 import com.mercadopago.android.px.model.Token;
-import com.mercadopago.android.px.model.exceptions.ApiException;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 import com.mercadopago.android.px.tracking.internal.utils.TrackingUtil;
 import java.util.List;
@@ -60,7 +59,6 @@ public class CardVaultPresenter extends MvpPresenter<CardVaultView, CardVaultPro
 
     //Security Code
     private String esc;
-    private SavedESCCardToken escCardToken;
 
     public CardVaultPresenter(@NonNull final AmountRepository amountRepository,
         @NonNull final UserSelectionRepository userSelectionRepository,
@@ -436,7 +434,7 @@ public class CardVaultPresenter extends MvpPresenter<CardVaultView, CardVaultPro
     private void createESCToken() {
         if (savedCardAvailable() && !isESCEmpty()) {
 
-            escCardToken = SavedESCCardToken.createWithEsc(card.getId(), esc);
+            final SavedESCCardToken escCardToken = SavedESCCardToken.createWithEsc(card.getId(), esc);
 
             getResourcesProvider()
                 .createESCTokenAsync(escCardToken, new TaggedCallback<Token>(ApiUtil.RequestOrigin.CREATE_TOKEN) {
@@ -450,26 +448,18 @@ public class CardVaultPresenter extends MvpPresenter<CardVaultView, CardVaultPro
 
                     @Override
                     public void onFailure(final MercadoPagoError error) {
-
                         if (error.isApiException() &&
-                            error.getApiException().getStatus() == ApiUtil.StatusCodes.BAD_REQUEST) {
-                            List<Cause> causes = error.getApiException().getCause();
-                            if (causes != null && !causes.isEmpty()) {
-                                Cause cause = causes.get(0);
-                                if (ApiException.ErrorCodes.INVALID_ESC.equals(cause.getCode()) ||
-                                    ApiException.ErrorCodes.INVALID_FINGERPRINT.equals(cause.getCode())) {
+                            EscUtil.isInvalidEscForApiException(error.getApiException())) {
 
-                                    getResourcesProvider().deleteESC(escCardToken.getCardId());
+                            getResourcesProvider().deleteESC(escCardToken.getCardId());
+                            esc = null;
 
-                                    esc = null;
-                                    if (viewAttached()) {
-                                        getView().startSecurityCodeActivity(TrackingUtil.SECURITY_CODE_REASON_ESC);
-                                    }
-                                } else {
-                                    recoverCreateESCToken(error);
-                                }
+                            //Start CVV screen if fail
+                            if (viewAttached()) {
+                                getView().startSecurityCodeActivity(TrackingUtil.SECURITY_CODE_REASON_ESC);
                             }
                         } else {
+                            //Retry with error screen
                             recoverCreateESCToken(error);
                         }
                     }

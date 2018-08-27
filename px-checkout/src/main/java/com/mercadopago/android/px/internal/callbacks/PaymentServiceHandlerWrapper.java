@@ -36,11 +36,6 @@ public final class PaymentServiceHandlerWrapper implements PaymentServiceHandler
     }
 
     @Override
-    public void onTokenRequired() {
-        handler.onTokenRequired();
-    }
-
-    @Override
     public void onRecoverPaymentEscInvalid() {
         handler.onRecoverPaymentEscInvalid();
     }
