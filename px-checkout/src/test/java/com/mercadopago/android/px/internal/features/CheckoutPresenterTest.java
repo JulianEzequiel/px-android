@@ -692,44 +692,6 @@ public class CheckoutPresenterTest {
         assertTrue(stubView.showingPaymentResult);
     }
 
-    //Ignored case - the it had sense when review and confirm could be canceled, not anymore.
-    @Ignore
-    @Test
-    public void createPaymentWithESCTokenThenSaveESC() {
-
-        final CheckoutPreference checkoutPreference = stubPreferenceOneItem();
-
-        stubProvider.setPaymentResponse(Payments.getApprovedPayment());
-
-        final AdvancedConfiguration advancedConfiguration = new AdvancedConfiguration.Builder()
-            .setEscEnabled(true)
-            .build();
-
-        when(groupsRepository.getGroups())
-            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        when(paymentSettingRepository.getAdvancedConfiguration()).thenReturn(advancedConfiguration);
-        when(paymentSettingRepository.getCheckoutPreference()).thenReturn(checkoutPreference);
-        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
-
-        presenter.initialize();
-
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final Token token = Tokens.getTokenWithESC();
-
-        final Card mockedCard = Cards.getCard();
-        mockedCard.setId("12345");
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        //Response from payment method selection
-        presenter.onPaymentMethodSelectionResponse(token, mockedCard);
-
-        //TODO do payment
-
-        //Response from Review And confirm
-        assertTrue(stubProvider.paymentRequested);
-        assertNotNull(stubProvider.paymentResponse);
-        assertTrue(stubProvider.manageEscRequested);
-    }
-
     @Test
     public void whenPaymentResultCalledThenCheckEscManagerIsCalled() {
         final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
