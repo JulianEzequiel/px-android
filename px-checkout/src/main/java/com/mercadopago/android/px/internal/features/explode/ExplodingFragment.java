@@ -37,6 +37,8 @@ public class ExplodingFragment extends Fragment {
 
     public interface ExplodingAnimationListener {
         void onAnimationFinished();
+
+        void onRevealStarted(final int revealColor);
     }
 
     private static final String ARG_EXPLODING_PARAMS = "ARG_EXPLODING_PARAMS";
@@ -116,8 +118,6 @@ public class ExplodingFragment extends Fragment {
         adjustHeight(icon);
         loadingContainer.setY(yButtonPosition);
 
-        Log.d("button", "loading container "+ String.valueOf(loadingContainer.getY()));
-        Log.d("button", "progress "+String.valueOf(progressBar.getY()));
         progressBar.setMax(maxLoadingTime);
 
         // start loading assuming the worst time possible
@@ -143,7 +143,6 @@ public class ExplodingFragment extends Fragment {
      */
     public void finishLoading(@NonNull final ExplodeDecorator explodeDecorator,
         @NonNull final ExplodingAnimationListener listener) {
-        Log.d("button", "progress finishing"+String.valueOf(progressBar.getY()));
 
         this.explodeDecorator = explodeDecorator;
         // now finish the remaining loading progress
@@ -304,9 +303,7 @@ public class ExplodingFragment extends Fragment {
                     TransitionDrawable colorSwitch = new TransitionDrawable(switchColors);
                     reveal.setBackgroundDrawable(colorSwitch);
                     colorSwitch.startTransition((int) animation.getDuration());
-                    //TODO
-                    //TODO FIX
-//                    new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(endColor);
+                    listener.onRevealStarted(endColor);
                 }
             }
 

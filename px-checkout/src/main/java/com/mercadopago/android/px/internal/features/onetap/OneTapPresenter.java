@@ -80,6 +80,11 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                     public void onAnimationFinished() {
                         getView().showPaymentResult(payment);
                     }
+
+                    @Override
+                    public void onRevealStarted(final int revealColor) {
+                        getView().tintStatusBar(revealColor);
+                    }
                 });
         }
     }
@@ -99,6 +104,11 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                     public void onAnimationFinished() {
                         getView().showPaymentResult(genericPayment);
                     }
+
+                    @Override
+                    public void onRevealStarted(final int revealColor) {
+                        getView().tintStatusBar(revealColor);
+                    }
                 });
         }
     }
@@ -117,6 +127,11 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                     @Override
                     public void onAnimationFinished() {
                         getView().showPaymentResult(businessPayment);
+                    }
+
+                    @Override
+                    public void onRevealStarted(final int revealColor) {
+                        getView().tintStatusBar(revealColor);
                     }
                 });
             getView().showBusinessResult(businessPayment);

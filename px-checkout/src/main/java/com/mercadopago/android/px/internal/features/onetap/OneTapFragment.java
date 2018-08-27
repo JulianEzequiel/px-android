@@ -2,19 +2,15 @@ package com.mercadopago.android.px.internal.features.onetap;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ScrollView;
-import com.mercadolibre.android.ui.widgets.MeliButton;
 import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.internal.di.Session;
 import com.mercadopago.android.px.internal.features.CheckoutActivity;
@@ -25,12 +21,8 @@ import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.features.onetap.components.OneTapContainer;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
-import com.mercadopago.android.px.internal.util.ScaleUtil;
-import com.mercadopago.android.px.internal.util.ViewUtils;
-import com.mercadopago.android.px.internal.view.Button;
-import com.mercadopago.android.px.internal.view.ButtonPrimary;
+import com.mercadopago.android.px.internal.util.StatusBarDecorator;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
-import com.mercadopago.android.px.model.Action;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.IPayment;
@@ -49,8 +41,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     /* default */ OneTapPresenter presenter;
 
     private ExplodingFragment explodingFragment;
-    private MeliButton confirmButton;
-    private ScrollView scrollView;
+    private Toolbar toolbar;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
         final OneTapFragment oneTapFragment = new OneTapFragment();
@@ -96,58 +87,6 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         return inflater.inflate(R.layout.px_onetap_fragment, container, false);
     }
 
-//    private void configureConfirmButton(final View parent) {
-//        confirmButton = parent.findViewById(R.id.confirm_button_view);
-//        scrollView = parent.findViewById(R.id.scrollView);
-//        //TODO fix margins
-////        final int resMargin = discount != null ? R.dimen.px_zero_height : R.dimen.px_m_margin;
-////        ViewUtils.setMarginTopInView(confirmButton, getContext().getResources().getDimensionPixelSize(resMargin));
-//        final String confirmText = getContext().getString(R.string.px_confirm);
-//        confirmButton.setText(confirmText);
-//
-//
-//        confirmButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(final View v) {
-//                //TODO esta bien hacerlo en este momento, o tendría que ser cuando el pago ya está confirmado?
-////                Rect scrollBounds = new Rect();
-////                scrollView.getDrawingRect(scrollBounds);
-////                int positionY =  (int) v.getY() - scrollBounds.top;
-//
-//                int positionY = (int) v.getY();
-//                int positionTop = (int) v.getTop();
-//                int positionBottom = (int) v.getBottom();
-//                Log.d("button top", String.valueOf(positionTop));
-//                Log.d("button bottom", String.valueOf(positionBottom));
-//                Log.d("button y", String.valueOf(positionY));
-//
-//                positionY = getRelativeTop(v);
-//                Log.d("button relative y ", String.valueOf(positionY));
-//
-//                positionY = getRectPosition(v);
-//                Log.d("button rect y ", String.valueOf(positionY));
-//
-//                presenter.confirmPayment(positionTop, v.getMeasuredHeight());
-////                confirmButton.setVisibility(View.INVISIBLE);
-//            }
-//        });
-//    }
-
-    private int getRelativeTop(View myView) {
-        if (myView.getParent().equals(myView.getRootView()))
-            return myView.getTop();
-        else
-            return myView.getTop() + getRelativeTop((View) myView.getParent());
-    }
-
-    private int getRectPosition(View view) {
-        Rect myViewRect = new Rect();
-        view.getGlobalVisibleRect(myViewRect);
-        float x = myViewRect.left;
-        float y = myViewRect.top;
-        return (int) y;
-    }
-
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
         final Bundle arguments = getArguments();
@@ -178,11 +117,10 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private void configureView(final View view, final OneTap.Actions actions, final OneTapModel model) {
         final ViewGroup container = view.findViewById(R.id.main_container);
-        final Toolbar toolbar = view.findViewById(R.id.toolbar);
+        toolbar = view.findViewById(R.id.toolbar);
         container.removeAllViews();
         configureToolbar(toolbar);
         new OneTapContainer(model, actions).render(container);
-//        configureConfirmButton(view);
     }
 
     private void configureToolbar(final Toolbar toolbar) {
@@ -201,6 +139,11 @@ public class OneTapFragment extends Fragment implements OneTap.View {
                 }
             });
         }
+        toolbar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideToolbar() {
+        toolbar.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -281,7 +224,6 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     public void showLoadingFor(final ExplodeDecorator params,
         final ExplodingFragment.ExplodingAnimationListener explodingAnimationListener) {
         if (explodingFragment != null && explodingFragment.isAdded()) {
-
             explodingFragment.finishLoading(params, explodingAnimationListener);
         }
     }
@@ -292,7 +234,15 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
+    public void tintStatusBar(final int color) {
+        new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(color);
+
+    }
+
+    @Override
     public void startLoadingButton(final int yButtonPosition, final int buttonHeight, final int paymentTimeout) {
+        hideToolbar();
+
         final ExplodeParams explodeParams = new ExplodeParams(yButtonPosition, buttonHeight,
             (int) getContext().getResources().getDimension(R.dimen.px_m_margin),
             getContext().getResources().getString(R.string.px_processing_payment_button),
@@ -301,7 +251,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         explodingFragment = ExplodingFragment.newInstance(explodeParams);
         getChildFragmentManager().beginTransaction()
             .replace(R.id.exploding_frame, explodingFragment)
-            .commit();
+            .commitNow();
     }
 
     @Override

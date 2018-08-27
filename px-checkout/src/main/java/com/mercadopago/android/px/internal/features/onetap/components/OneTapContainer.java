@@ -28,15 +28,10 @@ import javax.annotation.Nullable;
 
 public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Actions> {
 
-    private static final String CONFIRM_BUTTON_TAG = "confirm_button_tag";
-    private View button;
+    private View confirmButton;
 
     public OneTapContainer(final OneTapModel oneTapModel, final OneTap.Actions callBack) {
         super(oneTapModel, callBack);
-    }
-
-    public void change() {
-        button.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -52,7 +47,7 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         addAmount(parent, configuration, discountRepository);
         addPaymentMethod(parent, configuration, discountRepository);
         addTermsAndConditions(parent, campaign);
-        button = addConfirmButton(parent, discount);
+        confirmButton = addConfirmButton(parent, discount);
         return parent;
     }
 
@@ -110,8 +105,6 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
 
             @Override
             public void onClick(final int yButtonPosition, final int buttonHeight) {
-                //TODO esta bien hacerlo en este momento, o tendría que ser cuando el pago ya está confirmado?
-                final View confirmButton = parent.findViewWithTag(CONFIRM_BUTTON_TAG);
                 if (confirmButton != null) {
                     confirmButton.setVisibility(View.INVISIBLE);
                 }
@@ -123,7 +116,6 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         final View view = button.render(parent);
         final int resMargin = discount != null ? R.dimen.px_zero_height : R.dimen.px_m_margin;
         ViewUtils.setMarginTopInView(view, parent.getContext().getResources().getDimensionPixelSize(resMargin));
-        view.setTag(CONFIRM_BUTTON_TAG);
         parent.addView(view);
         return view;
     }

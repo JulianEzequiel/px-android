@@ -42,6 +42,8 @@ public interface OneTap {
         void cancelLoading();
 
         void startLoadingButton(int yButtonPosition, final int buttonHeight, final int paymentTimeout);
+
+        void tintStatusBar(int color);
     }
 
     interface Actions {
