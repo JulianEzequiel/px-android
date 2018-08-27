@@ -18,14 +18,12 @@ import com.mercadopago.android.px.internal.features.MercadoPagoComponents;
 import com.mercadopago.android.px.internal.features.onetap.components.OneTapContainer;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
-import com.mercadopago.android.px.internal.util.ErrorUtil;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
-import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
 public class OneTapFragment extends Fragment implements OneTap.View {
@@ -141,11 +139,10 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
         if (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_OK) {
             presenter.onTokenResolved();
-        } else if (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_CANCELED && callback != null) {
-            presenter.cardVaultCanceled();
         } else if (requestCode == REQ_CODE_PAYMENT_PROCESSOR && getActivity() != null) {
             ((CheckoutActivity) getActivity()).resolvePaymentProcessor(resultCode, data);
         }
+        // CardVault cancel (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_CANCELED)
     }
 
     @Override
@@ -188,8 +185,9 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     @Override
     public void showErrorView(@NonNull final MercadoPagoError error) {
+        //TODO refactor
         if (getActivity() != null) {
-            ErrorUtil.startErrorActivity(getActivity(), error);
+            ((CheckoutActivity) getActivity()).presenter.onPaymentError(error);
         }
     }
 

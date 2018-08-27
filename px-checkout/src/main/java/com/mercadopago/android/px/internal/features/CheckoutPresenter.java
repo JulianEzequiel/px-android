@@ -2,7 +2,7 @@ package com.mercadopago.android.px.internal.features;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 import com.mercadopago.android.px.internal.base.MvpPresenter;
 import com.mercadopago.android.px.internal.callbacks.FailureRecovery;
 import com.mercadopago.android.px.internal.callbacks.TaggedCallback;
@@ -51,6 +51,7 @@ import java.util.Map;
 public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvider> implements PaymentServiceHandler {
 
     private static final String INTERNAL_SERVER_ERROR_FIRST_DIGIT = "5";
+    private static final String TAG = CheckoutPresenter.class.getName();
 
     @NonNull private final CheckoutStateModel state;
 
@@ -335,8 +336,8 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
                     .setPaymentStatus(Payment.StatusCodes.STATUS_IN_PROCESS)
                     .setPaymentStatusDetail(Payment.StatusDetail.STATUS_DETAIL_PENDING_CONTINGENCY)
                     .build();
-
-            getView().showPaymentResult(paymentResult, amountRepository.getAmountToPay(), discountRepository.getDiscount());
+            getView()
+                .showPaymentResult(paymentResult, amountRepository.getAmountToPay(), discountRepository.getDiscount());
         } else if (isInternalServerError(mercadoPagoError)) {
             resolveInternalServerError(mercadoPagoError);
         } else if (isBadRequestError(mercadoPagoError)) {
@@ -715,21 +716,6 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
     }
 
     @Override
-    public void onIssuerRequired() {
-        //TODO check.
-    }
-
-    @Override
-    public void onPayerCostRequired() {
-        //TODO check.
-    }
-
-    @Override
-    public void onTokenRequired() {
-        //TODO check.
-    }
-
-    @Override
     public void onPaymentFinished(@NonNull final Payment payment) {
         if (isViewAttached()) {
             //TODO unify with Generic payment
@@ -767,8 +753,23 @@ public class CheckoutPresenter extends MvpPresenter<CheckoutView, CheckoutProvid
     }
 
     @Override
-    public void cancelPayment() {
-        //TODO - should not cancel payment
+    public void onIssuerRequired() {
+        //TODO check.
+        Log.d(TAG, "Should not happen. - onIssuerRequired");
+        cancelCheckout();
+    }
+
+    @Override
+    public void onPayerCostRequired() {
+        //TODO check.
+        Log.d(TAG, "Should not happen. - onPayerCostRequired");
+        cancelCheckout();
+    }
+
+    @Override
+    public void onTokenRequired() {
+        //TODO definition
+        Log.d(TAG, "Should not happen. - onTokenRequired");
         cancelCheckout();
     }
 }

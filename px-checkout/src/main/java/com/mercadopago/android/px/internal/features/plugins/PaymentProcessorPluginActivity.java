@@ -102,7 +102,8 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == ERROR_REQUEST_CODE) {
-            cancelPayment();
+            //TODO verify error handling
+            onBackPressed();
         }
     }
 
@@ -132,11 +133,12 @@ public final class PaymentProcessorPluginActivity extends AppCompatActivity
 
     @Override
     public void onPaymentError(@NonNull final MercadoPagoError error) {
+        //TODO verify error handling
         ErrorUtil.startErrorActivity(this, error);
     }
 
     @Override
-    public void cancelPayment() {
+    public void onBackPressed() {
         setResult(RESULT_CANCELED);
         finish();
     }

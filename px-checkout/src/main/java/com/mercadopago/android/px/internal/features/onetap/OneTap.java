@@ -44,7 +44,5 @@ public interface OneTap {
         void changePaymentMethod();
 
         void onAmountShowMore();
-
-        void cardVaultCanceled();
     }
 }

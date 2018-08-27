@@ -106,7 +106,7 @@ public class PaymentService implements PaymentRepository {
     }
 
     private void validateCardInfo(final PaymentServiceHandler paymentServiceHandler) {
-        //TODO arreglar
+        //TODO improve
         if (userSelectionRepository.hasCardSelected() && userSelectionRepository.getPayerCost() != null) {
             //Paying with saved card
             if (paymentSettingRepository.getToken() != null) {

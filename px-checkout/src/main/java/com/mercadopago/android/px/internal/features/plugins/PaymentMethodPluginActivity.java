@@ -59,8 +59,9 @@ public class PaymentMethodPluginActivity extends AppCompatActivity implements
         final PaymentMethodPlugin plugin = pluginRepository.getPlugin(paymentMethodInfo.getId());
 
         final PaymentMethodPlugin.CheckoutData checkoutData =
-            new PaymentMethodPlugin.CheckoutData(paymentData,
-                configurationModule.getPaymentSettings().getCheckoutPreference());
+            new PaymentMethodPlugin.CheckoutData(configurationModule.getPaymentSettings().getCheckoutPreference()
+                , session.getDiscountRepository().getDiscount(),
+                configurationModule.getPaymentSettings().getPrivateKey());
 
         final Fragment fragment = plugin.getFragment(checkoutData, this);
 

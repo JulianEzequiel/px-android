@@ -16,6 +16,7 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 /* default */ class OneTapPresenter extends MvpPresenter<OneTap.View, ResourcesProvider>
     implements OneTap.Actions, PaymentServiceHandler {
 
+    private static final String TAG = OneTapPresenter.class.getName();
     @NonNull private final OneTapModel model;
     @NonNull private final PaymentRepository paymentRepository;
 
@@ -89,17 +90,10 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
     @Override
     public void onPaymentError(@NonNull final MercadoPagoError error) {
-        //TODO add recovery handling to payment service?
-//        resolvePaymentError(error, paymentRepository.getPaymentData());
+        //This method calls to Checkout activity to manage esc, it's important to check
+        // all this behaviour ahead.
         if (isViewAttached()) {
             getView().showErrorView(error);
-        }
-    }
-
-    @Override
-    public void cancelPayment() {
-        if (isViewAttached()) {
-            //TODO do something.
         }
     }
 
@@ -119,42 +113,32 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
     @Override
     public void onPaymentMethodRequired() {
-        //TODO definition
-        Log.d(OneTapPresenter.class.getName(), "Should not happen. - onPaymentMethodRequired");
+        Log.d(TAG, "Should not happen. - onPaymentMethodRequired");
         cancel();
     }
 
     @Override
     public void onCardError() {
-        //TODO definition
-        Log.d(OneTapPresenter.class.getName(), "Should not happen. - onCardError");
+        Log.d(TAG, "Should not happen. - onCardError");
         cancel();
     }
 
     @Override
     public void onIssuerRequired() {
-        //TODO definition
-        Log.d(OneTapPresenter.class.getName(), "Should not happen. - onIssuerRequired");
+        Log.d(TAG, "Should not happen. - onIssuerRequired");
         cancel();
     }
 
     @Override
     public void onPayerCostRequired() {
-        //TODO definition
-        Log.d(OneTapPresenter.class.getName(), "Should not happen. - onPayerCostRequired");
+        Log.d(TAG, "Should not happen. - onPayerCostRequired");
         cancel();
     }
 
     @Override
     public void onTokenRequired() {
-        //TODO definition
-        Log.d(OneTapPresenter.class.getName(), "Should not happen. - onPayerCostRequired");
+        Log.d(TAG, "Should not happen. - onPayerCostRequired");
         cancel();
-    }
-
-    @Override
-    public void cardVaultCanceled() {
-        //TODO?
     }
 
 }

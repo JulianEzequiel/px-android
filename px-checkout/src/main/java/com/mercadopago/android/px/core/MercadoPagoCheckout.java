@@ -221,8 +221,6 @@ public class MercadoPagoCheckout {
         }
 
         /**
-         * //TODO we will add a new mechanism
-         *
          * @deprecated we will not support this mechanism anymore.
          */
         @Deprecated
@@ -233,8 +231,6 @@ public class MercadoPagoCheckout {
         }
 
         /**
-         * //TODO we will add a new mechanism
-         *
          * @deprecated we will not support this mechanism anymore.
          */
         @Deprecated
@@ -245,8 +241,6 @@ public class MercadoPagoCheckout {
         }
 
         /**
-         * //TODO we will add a new mechanism
-         *
          * @deprecated we will not support this mechanism anymore.
          */
         @Deprecated
@@ -257,7 +251,6 @@ public class MercadoPagoCheckout {
         }
 
         /**
-         * //TODO we will add a new mechanism
          * @deprecated we will not support this mechanism anymore.
          */
         @Deprecated

@@ -38,7 +38,6 @@ public interface PaymentProcessor extends Serializable {
 
         void onPaymentError(@NonNull final MercadoPagoError error);
 
-        void cancelPayment();
     }
 
     /**

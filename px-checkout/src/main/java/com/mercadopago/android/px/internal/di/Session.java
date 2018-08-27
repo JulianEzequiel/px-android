@@ -184,7 +184,8 @@ public final class Session extends ApplicationModule
     @NonNull
     public PluginRepository getPluginRepository() {
         if (pluginRepository == null) {
-            pluginRepository = new PluginService(getContext(), getConfigurationModule().getPaymentSettings());
+            pluginRepository = new PluginService(getContext(), getConfigurationModule().getPaymentSettings(),
+                getDiscountRepository());
         }
         return pluginRepository;
     }
