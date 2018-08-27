@@ -13,9 +13,7 @@ import com.mercadopago.android.px.internal.datasource.MercadoPagoESC;
 import com.mercadopago.android.px.internal.datasource.MercadoPagoServicesAdapter;
 import com.mercadopago.android.px.internal.features.uicontrollers.FontCache;
 import com.mercadopago.android.px.internal.util.ApiUtil;
-import com.mercadopago.android.px.internal.util.EscUtil;
 import com.mercadopago.android.px.internal.util.QueryBuilder;
-import com.mercadopago.android.px.model.PaymentData;
 import com.mercadopago.android.px.model.exceptions.ApiException;
 import com.mercadopago.android.px.model.exceptions.CheckoutPreferenceException;
 import com.mercadopago.android.px.model.exceptions.ExceptionHandler;
@@ -50,27 +48,6 @@ public class CheckoutProviderImpl implements CheckoutProvider {
         if (!FontCache.hasTypeface(FontCache.CUSTOM_LIGHT_FONT)) {
             fetchLightFont();
         }
-    }
-
-    @Override
-    public boolean manageEscForPayment(final PaymentData paymentData, final String paymentStatus,
-        final String paymentStatusDetail) {
-        if (EscUtil.shouldDeleteEsc(paymentData, paymentStatus,
-            paymentStatusDetail)) {
-            mercadoPagoESC.deleteESC(paymentData.getToken().getCardId());
-        } else if (EscUtil.shouldStoreESC(paymentData, paymentStatus, paymentStatusDetail)) {
-            mercadoPagoESC.saveESC(paymentData.getToken().getCardId(), paymentData.getToken().getEsc());
-        }
-        return EscUtil.isInvalidEscPayment(paymentData, paymentStatus, paymentStatusDetail);
-    }
-
-    @Override
-    public boolean manageEscForError(final MercadoPagoError error, final PaymentData paymentData) {
-        final boolean isInvalidEsc = EscUtil.isErrorInvalidPaymentWithEsc(error, paymentData);
-        if (isInvalidEsc) {
-            mercadoPagoESC.deleteESC(paymentData.getToken().getCardId());
-        }
-        return isInvalidEsc;
     }
 
     private void fetchRegularFont() {

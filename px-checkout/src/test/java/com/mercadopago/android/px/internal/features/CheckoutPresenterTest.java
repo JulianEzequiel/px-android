@@ -24,13 +24,10 @@ import com.mercadopago.android.px.mocks.PaymentMethodSearchs;
 import com.mercadopago.android.px.mocks.PaymentMethods;
 import com.mercadopago.android.px.mocks.Payments;
 import com.mercadopago.android.px.mocks.Tokens;
-import com.mercadopago.android.px.model.BusinessPayment;
-import com.mercadopago.android.px.model.Campaign;
 import com.mercadopago.android.px.model.Card;
 import com.mercadopago.android.px.model.Cause;
 import com.mercadopago.android.px.model.Customer;
 import com.mercadopago.android.px.model.Discount;
-import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.Identification;
 import com.mercadopago.android.px.model.Issuer;
 import com.mercadopago.android.px.model.Payer;
@@ -52,7 +49,6 @@ import com.mercadopago.android.px.utils.PluginInitializationSuccess;
 import com.mercadopago.android.px.utils.StubSuccessMpCall;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -138,97 +134,6 @@ public class CheckoutPresenterTest {
         presenter.attachResourcesProvider(provider);
         presenter.attachView(view);
         return presenter;
-    }
-
-    @Test
-    public void whenResolvePaymentErrorVerifyEscManagerCalled() {
-        final PaymentData paymentData = mock(PaymentData.class);
-        final MercadoPagoError error = mock(MercadoPagoError.class);
-        when(checkoutProvider.manageEscForError(error, paymentData)).thenReturn(false);
-        final CheckoutPresenter presenter = getPresenter();
-        presenter.resolvePaymentError(error, paymentData);
-        verify(checkoutProvider).manageEscForError(error, paymentData);
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
-    public void whenResolvePaymentErrorEscWasInvalidatedVerifyEscManagerCalledAndRecoveryFlowStarted() {
-        when(configuration.getCheckoutPreference()).thenReturn(stubPreferenceOneItem());
-        final PaymentData paymentData = mock(PaymentData.class);
-        final MercadoPagoError error = mock(MercadoPagoError.class);
-        final Token token = mock(Token.class);
-        final Issuer issuer = mock(Issuer.class);
-        final PayerCost payerCost = mock(PayerCost.class);
-        final PaymentMethod paymentMethod = mock(PaymentMethod.class);
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
-
-        when(checkoutProvider.manageEscForError(error, paymentData)).thenReturn(true);
-        final CheckoutPresenter presenter = getPresenter();
-
-        userSelectionRepository.select(issuer);
-        configuration.configure(token);
-        presenter.onCardFlowResponse();
-
-        verify(checkoutView).showReviewAndConfirm(false);
-
-        presenter.resolvePaymentError(error, paymentData);
-
-        verify(checkoutProvider).manageEscForError(error, paymentData);
-
-        verify(checkoutView).startPaymentRecoveryFlow(any(PaymentRecovery.class));
-
-        verifyNoMoreInteractions(checkoutProvider);
-        verifyNoMoreInteractions(checkoutView);
-    }
-
-    @Test
-    public void whenShouldShowPaymentResultVerifyEscManagerCalled() {
-        final CheckoutPresenter presenter = getPresenter();
-
-        final PaymentData paymentData = mock(PaymentData.class);
-
-        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
-
-        final IPayment iPayment = Payments.create(Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
-
-        when(checkoutProvider.manageEscForPayment(paymentData,
-            iPayment.getPaymentStatus(),
-            iPayment.getPaymentStatusDetail())).thenReturn(false);
-
-        presenter.checkStartPaymentResultActivity(iPayment);
-
-        verify(checkoutProvider).manageEscForPayment(paymentData,
-            iPayment.getPaymentStatus(),
-            iPayment.getPaymentStatusDetail());
-
-        verifyNoMoreInteractions(checkoutProvider);
-    }
-
-    @Test
-    public void whenShouldShowBusinessPaymentVerifyEscManagerCalled() {
-        final CheckoutPresenter presenter = getPresenter();
-        when(configuration.getCheckoutPreference()).thenReturn(stubPreferenceOneItem());
-        final BusinessPayment paymentResult = mock(BusinessPayment.class);
-        final PaymentData paymentData = mock(PaymentData.class);
-        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
-
-        when(paymentResult.getPaymentStatus()).thenReturn(Payment.StatusCodes.STATUS_APPROVED);
-        when(paymentResult.getPaymentStatusDetail()).thenReturn(Payment.StatusDetail.STATUS_DETAIL_ACCREDITED);
-
-        when(checkoutProvider.manageEscForPayment(paymentData,
-            paymentResult.getPaymentStatus(),
-            paymentResult.getPaymentStatusDetail())).thenReturn(false);
-
-        presenter.onBusinessResult(paymentResult);
-
-        verify(checkoutProvider).manageEscForPayment(paymentData,
-            paymentResult.getPaymentStatus(),
-            paymentResult.getPaymentStatusDetail());
-
-        verifyNoMoreInteractions(checkoutProvider);
     }
 
     @Ignore
@@ -700,71 +605,6 @@ public class CheckoutPresenterTest {
         assertFalse(TextUtil.isEmpty(provider.paymentCustomerId));
     }
 
-    @Test
-    public void ifPaymentResultApprovedSetAndTokenWithESCAndESCEnabledThenSaveESC() {
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final Issuer issuer = Issuers.getIssuers().get(0);
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        //Token with card Id and ESC
-        final Token token = Tokens.getTokenWithESC();
-
-        final PaymentData paymentData = new PaymentData();
-        paymentData.setPaymentMethod(paymentMethod);
-        paymentData.setIssuer(issuer);
-        paymentData.setPayerCost(payerCost);
-        paymentData.setToken(token);
-
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
-
-        presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED));
-
-        assertTrue(provider.manageEscRequested);
-    }
-
-    @Test
-    public void ifPaymentResultApprovedSetAndESCEnabledButTokenHasNoESCThenDontSaveESC() {
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final Issuer issuer = Issuers.getIssuers().get(0);
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        //Token without card id or ESC
-        final Token token = Tokens.getVisaToken();
-
-        final PaymentData paymentData = new PaymentData();
-        paymentData.setPaymentMethod(paymentMethod);
-        paymentData.setIssuer(issuer);
-        paymentData.setPayerCost(payerCost);
-        paymentData.setToken(token);
-
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
-
-        presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED));
-
-        assertTrue(provider.manageEscRequested);
-    }
-
-    @Test
-    public void ifPaymentResultApprovedSetAndESCEnabledThenShowPaymentResultScreen() {
-
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final Issuer issuer = Issuers.getIssuers().get(0);
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        //Token with card Id and ESC
-        final Token token = Tokens.getTokenWithESC();
-
-        final PaymentData paymentData = new PaymentData();
-        paymentData.setPaymentMethod(paymentMethod);
-        paymentData.setIssuer(issuer);
-        paymentData.setPayerCost(payerCost);
-        paymentData.setToken(token);
-
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
-
-        presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_APPROVED,
-            Payment.StatusDetail.STATUS_DETAIL_ACCREDITED));
-        assertTrue(view.showingPaymentResult);
-    }
 
     //Ignored case - the it had sense when review and confirm could be canceled, not anymore.
     @Ignore
@@ -801,28 +641,6 @@ public class CheckoutPresenterTest {
         //Response from Review And confirm
         assertTrue(provider.paymentRequested);
         assertNotNull(provider.paymentResponse);
-        assertTrue(provider.manageEscRequested);
-    }
-
-    @Test
-    public void whenPaymentResultCalledThenCheckEscManagerIsCalled() {
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final Issuer issuer = Issuers.getIssuers().get(0);
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        //Token with Card ID (because it was created with ESC enabled)
-        final Token token = Tokens.getTokenWithESC();
-        final PaymentData paymentData = new PaymentData();
-        paymentData.setPaymentMethod(paymentMethod);
-        paymentData.setIssuer(issuer);
-        paymentData.setPayerCost(payerCost);
-        paymentData.setToken(token);
-        when(paymentRepository.getPaymentData()).thenReturn(paymentData);
-
-        final CheckoutPresenter presenter = getBasePresenter(view, provider);
-
-        presenter.checkStartPaymentResultActivity(Payments.create(Payment.StatusCodes.STATUS_REJECTED,
-            Payment.StatusDetail.STATUS_DETAIL_INVALID_ESC));
-
         assertTrue(provider.manageEscRequested);
     }
 
@@ -1104,10 +922,6 @@ public class CheckoutPresenterTest {
 
     public class MockedProvider implements CheckoutProvider {
 
-        private boolean campaignsRequested = false;
-
-        private List<Campaign> campaigns;
-        private boolean checkoutPreferenceRequested = false;
         private CheckoutPreference preference;
         private boolean paymentMethodSearchRequested = false;
         private PaymentMethodSearch paymentMethodSearchResponse;
@@ -1126,26 +940,13 @@ public class CheckoutPresenterTest {
 
         @Override
         public void fetchFonts() {
-
-        }
-
-        @Override
-        public boolean manageEscForPayment(final PaymentData paymentData, final String paymentStatus,
-            final String paymentStatusDetail) {
-            manageEscRequested = true;
-            return false;
-        }
-
-        @Override
-        public boolean manageEscForError(final MercadoPagoError error, final PaymentData paymentData) {
-            return false;
+            //TODO
         }
 
         @Override
         public void getCheckoutPreference(String checkoutPreferenceId,
             TaggedCallback<CheckoutPreference> taggedCallback) {
-            checkoutPreferenceRequested = true;
-            taggedCallback.onSuccess(preference);
+            //TODO
         }
 
         @Override
@@ -1156,24 +957,6 @@ public class CheckoutPresenterTest {
         @Override
         public String getCheckoutExceptionMessage(final Exception exception) {
             return null;
-        }
-//        @Override
-//        public void createPayment(String transactionId, CheckoutPreference checkoutPreference, PaymentData paymentData,
-//            Boolean binaryMode, String customerId, TaggedCallback<Payment> taggedCallback) {
-//            this.paymentMethodPaid = paymentData.getPaymentMethod();
-//            this.transactionId = transactionId;
-//            this.paymentCustomerId = customerId;
-//            this.paymentRequested = true;
-//            this.payerPosted = paymentData.getPayer();
-//            if (shouldFail) {
-//                taggedCallback.onFailure(failedResponse);
-//            } else {
-//                taggedCallback.onSuccess(paymentResponse);
-//            }
-//        }
-
-        public void setCampaignsResponse(List<Campaign> campaigns) {
-            this.campaigns = campaigns;
         }
 
         public void setCheckoutPreferenceResponse(CheckoutPreference preference) {

@@ -25,7 +25,9 @@ import com.mercadopago.android.px.internal.util.StatusBarDecorator;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
+import com.mercadopago.android.px.model.GenericPayment;
 import com.mercadopago.android.px.model.IPayment;
+import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
 import static android.app.Activity.RESULT_OK;
@@ -205,18 +207,25 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
-    public void showBusinessResult(final BusinessPayment businessPayment) {
+    public void showPaymentResult(@NonNull final IPayment paymentResult) {
         //TODO refactor
         if (getActivity() != null) {
-            ((CheckoutActivity) getActivity()).presenter.onBusinessResult(businessPayment);
+            //TODO refactor
+            if (paymentResult instanceof GenericPayment) {
+                ((CheckoutActivity) getActivity()).presenter.onPaymentFinished((GenericPayment) paymentResult);
+            } else if (paymentResult instanceof Payment) {
+                ((CheckoutActivity) getActivity()).presenter.onPaymentFinished((Payment) paymentResult);
+            } else {
+                ((CheckoutActivity) getActivity()).presenter.onPaymentFinished((BusinessPayment) paymentResult);
+            }
         }
     }
 
+    //TODO refactor
     @Override
-    public void showPaymentResult(final IPayment paymentResult) {
-        //TODO refactor
+    public void onRecoverPaymentEscInvalid() {
         if (getActivity() != null) {
-            ((CheckoutActivity) getActivity()).presenter.checkStartPaymentResultActivity(paymentResult);
+            ((CheckoutActivity) getActivity()).presenter.onRecoverPaymentEscInvalid();
         }
     }
 

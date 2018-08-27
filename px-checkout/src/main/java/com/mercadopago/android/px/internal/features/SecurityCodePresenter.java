@@ -354,7 +354,7 @@ public class SecurityCodePresenter extends MvpPresenter<SecurityCodeActivityView
             });
     }
 
-    private void resolveTokenCreation(Token token) {
+    private void resolveTokenCreation(final Token token) {
         mToken = token;
         if (mCardInfo != null) {
             mToken.setLastFourDigits(mCardInfo.getLastFourDigits());
