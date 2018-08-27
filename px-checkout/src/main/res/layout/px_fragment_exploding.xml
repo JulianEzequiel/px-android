@@ -3,8 +3,9 @@
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             android:background="#B3FFFFFF"
              android:clickable="true">
+
+    <!--android:background="#B3FFFFFF"-->
 
     <RelativeLayout
         android:id="@+id/cho_loading_buy_container"

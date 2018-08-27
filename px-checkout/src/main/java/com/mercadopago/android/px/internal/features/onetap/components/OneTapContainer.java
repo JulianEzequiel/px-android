@@ -29,9 +29,14 @@ import javax.annotation.Nullable;
 public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Actions> {
 
     private static final String CONFIRM_BUTTON_TAG = "confirm_button_tag";
+    private View button;
 
     public OneTapContainer(final OneTapModel oneTapModel, final OneTap.Actions callBack) {
         super(oneTapModel, callBack);
+    }
+
+    public void change() {
+        button.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -47,7 +52,7 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         addAmount(parent, configuration, discountRepository);
         addPaymentMethod(parent, configuration, discountRepository);
         addTermsAndConditions(parent, campaign);
-        addConfirmButton(parent, discount);
+        button = addConfirmButton(parent, discount);
         return parent;
     }
 
@@ -60,23 +65,24 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         final String defaultMultipleTitle = parent.getContext().getString(R.string.px_review_summary_products);
         final int icon = collectorIcon == null ? R.drawable.px_review_item_default : collectorIcon;
         final String itemsTitle = com.mercadopago.android.px.model.Item
-                .getItemsTitle(items, defaultMultipleTitle);
+            .getItemsTitle(items, defaultMultipleTitle);
         final View render = new CollapsedItem(new CollapsedItem.Props(icon, itemsTitle)).render(parent);
         parent.addView(render);
     }
 
-    private void addAmount(final ViewGroup parent, final PaymentSettingRepository configuration, final DiscountRepository discountRepository) {
+    private void addAmount(final ViewGroup parent, final PaymentSettingRepository configuration,
+        final DiscountRepository discountRepository) {
         final Amount.Props props = Amount.Props.from(this.props, configuration, discountRepository);
         final View view = new Amount(props, getActions()).render(parent);
         parent.addView(view);
     }
 
     private void addPaymentMethod(final ViewGroup parent,
-                                  final PaymentSettingRepository configuration,
-                                  final DiscountRepository discountRepository) {
+        final PaymentSettingRepository configuration,
+        final DiscountRepository discountRepository) {
         final View view =
-                new PaymentMethod(PaymentMethod.Props.createFrom(props, configuration, discountRepository),
-                        getActions()).render(parent);
+            new PaymentMethod(PaymentMethod.Props.createFrom(props, configuration, discountRepository),
+                getActions()).render(parent);
         parent.addView(view);
     }
 
@@ -84,17 +90,17 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         if (campaign != null) {
             final Context context = parent.getContext();
             TermsAndConditionsModel model = new TermsAndConditionsModel(campaign.getCampaignTermsUrl(),
-                    context.getString(R.string.px_discount_terms_and_conditions_message),
-                    context.getString(R.string.px_discount_terms_and_conditions_linked_message),
-                    props.getPublicKey(),
-                    LineSeparatorType.NONE);
+                context.getString(R.string.px_discount_terms_and_conditions_message),
+                context.getString(R.string.px_discount_terms_and_conditions_linked_message),
+                props.getPublicKey(),
+                LineSeparatorType.NONE);
             final View view = new TermsAndConditionsComponent(model)
-                    .render(parent);
+                .render(parent);
             parent.addView(view);
         }
     }
 
-    private void addConfirmButton(final @Nonnull ViewGroup parent, @Nullable final Discount discount) {
+    private View addConfirmButton(final @Nonnull ViewGroup parent, @Nullable final Discount discount) {
         final String confirm = parent.getContext().getString(R.string.px_confirm);
         final Button.Actions actions = new Button.Actions() {
             @Override
@@ -107,9 +113,8 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
                 //TODO esta bien hacerlo en este momento, o tendría que ser cuando el pago ya está confirmado?
                 final View confirmButton = parent.findViewWithTag(CONFIRM_BUTTON_TAG);
                 if (confirmButton != null) {
-                    confirmButton.setVisibility(View.GONE);
+                    confirmButton.setVisibility(View.INVISIBLE);
                 }
-
                 getActions().confirmPayment(yButtonPosition, buttonHeight);
             }
         };
@@ -120,5 +125,6 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         ViewUtils.setMarginTopInView(view, parent.getContext().getResources().getDimensionPixelSize(resMargin));
         view.setTag(CONFIRM_BUTTON_TAG);
         parent.addView(view);
+        return view;
     }
 }

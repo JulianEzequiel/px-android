@@ -17,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -114,6 +115,9 @@ public class ExplodingFragment extends Fragment {
         adjustHeight(circle);
         adjustHeight(icon);
         loadingContainer.setY(yButtonPosition);
+
+        Log.d("button", "loading container "+ String.valueOf(loadingContainer.getY()));
+        Log.d("button", "progress "+String.valueOf(progressBar.getY()));
         progressBar.setMax(maxLoadingTime);
 
         // start loading assuming the worst time possible
@@ -139,6 +143,8 @@ public class ExplodingFragment extends Fragment {
      */
     public void finishLoading(@NonNull final ExplodeDecorator explodeDecorator,
         @NonNull final ExplodingAnimationListener listener) {
+        Log.d("button", "progress finishing"+String.valueOf(progressBar.getY()));
+
         this.explodeDecorator = explodeDecorator;
         // now finish the remaining loading progress
         final int progress = progressBar.getProgress();
@@ -222,7 +228,7 @@ public class ExplodingFragment extends Fragment {
         a.setDuration(duration);
         a.start();
         text.setVisibility(View.GONE);
-    }
+}
 
     /**
      * @return the shape of the progress bar to transform
