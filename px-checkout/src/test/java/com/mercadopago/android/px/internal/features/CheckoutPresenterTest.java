@@ -61,7 +61,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubExpiredPreference;
 import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubPreferenceOneItem;
 import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubPreferenceOneItemAndPayer;
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -489,26 +488,6 @@ public class CheckoutPresenterTest {
         verify(checkoutView).showReviewAndConfirm(false);
         verifyNoMoreInteractions(checkoutView);
         verifyNoMoreInteractions(paymentRepository);
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
-    public void ifPaymentRecoveryRequiredWithInvalidPaymentMethodThenShowError() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
-
-        presenter.initialize();
-        final PaymentMethod paymentMethodOff = PaymentMethods
-            .getPaymentMethodOff();
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
-
-        presenter.onPaymentMethodSelectionResponse(null, null);
-        assertTrue(stubView.showingReviewAndConfirm);
-        presenter.onPaymentConfirmation();
-        assertTrue(stubView.showingPaymentResult);
-        presenter.onPaymentResultCancel(PaymentResult.RECOVER_PAYMENT);
-        assertTrue(stubView.showingError);
     }
 
     //Backs
