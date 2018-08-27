@@ -1,7 +1,6 @@
 package com.mercadopago.android.px.internal.features;
 
 import android.support.annotation.NonNull;
-import com.mercadopago.android.px.configuration.AdvancedConfiguration;
 import com.mercadopago.android.px.internal.callbacks.TaggedCallback;
 import com.mercadopago.android.px.internal.features.hooks.Hook;
 import com.mercadopago.android.px.internal.features.providers.CheckoutProvider;
@@ -16,7 +15,6 @@ import com.mercadopago.android.px.internal.util.TextUtil;
 import com.mercadopago.android.px.internal.viewmodel.BusinessPaymentModel;
 import com.mercadopago.android.px.internal.viewmodel.CheckoutStateModel;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
-import com.mercadopago.android.px.mocks.Cards;
 import com.mercadopago.android.px.mocks.Customers;
 import com.mercadopago.android.px.mocks.Installments;
 import com.mercadopago.android.px.mocks.Issuers;
@@ -53,13 +51,11 @@ import com.mercadopago.android.px.utils.StubSuccessMpCall;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubExpiredPreference;
@@ -67,7 +63,6 @@ import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubP
 import static com.mercadopago.android.px.utils.StubCheckoutPreferenceUtils.stubPreferenceOneItemAndPayer;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -714,107 +709,28 @@ public class CheckoutPresenterTest {
         assertTrue(stubProvider.manageEscRequested);
     }
 
-    //TODO FIX
-    @Ignore
     @Test
-    public void ifPayerDataCollectedAndPayerInPreferenceThenUseBothForPayment() {
-
-        final String firstName = "FirstName";
-        final String lastName = "LastName";
-        final Identification identification = new Identification();
-        identification.setType("cpf");
-        identification.setNumber("111");
-
-        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
-        final CheckoutPreference preference = stubPreferenceOneItem();
-        preference.getPayer().setFirstName(firstName);
-        preference.getPayer().setLastName(lastName);
-        preference.getPayer().setIdentification(identification);
-
-        when(paymentSettingRepository.getCheckoutPreference()).thenReturn(preference);
-        stubProvider.setCheckoutPreferenceResponse(preference);
-        when(groupsRepository.getGroups())
-            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
-
-        presenter.initialize();
-
-        final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
-        presenter.onPaymentMethodSelectionResponse(null, null);
-        presenter.onPaymentConfirmation();
-
-        assertEquals(stubProvider.payerPosted.getEmail(), preference.getPayer().getEmail());
-        assertEquals(stubProvider.payerPosted.getFirstName(), firstName);
-        assertEquals(stubProvider.payerPosted.getLastName(), lastName);
-        assertEquals(stubProvider.payerPosted.getIdentification().getType(), identification.getType());
-        assertEquals(stubProvider.payerPosted.getIdentification().getNumber(), identification.getNumber());
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
-    public void ifOnlyPayerFromPreferenceThenUseItForPayment() {
-        CheckoutPreference preference = stubPreferenceOneItem();
-        when(paymentSettingRepository.getCheckoutPreference()).thenReturn(preference);
-        stubProvider.setCheckoutPreferenceResponse(preference);
-        when(groupsRepository.getGroups())
-            .thenReturn(new StubSuccessMpCall<>(PaymentMethodSearchs.getCompletePaymentMethodSearchMLA()));
-        stubProvider.setPaymentResponse(Payments.getCallForAuthPayment());
-        final CheckoutPresenter presenter = getBasePresenter(stubView, stubProvider);
-        presenter.initialize();
-
-        final PaymentMethod paymentMethodOff = PaymentMethods.getPaymentMethodOff();
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethodOff);
-        presenter
-            .onPaymentMethodSelectionResponse(null, null);
-        presenter.onPaymentConfirmation();
-        assertEquals(stubProvider.payerPosted.getEmail(), preference.getPayer().getEmail());
-    }
-
-    @Test
-    public void onIdentificationInvalidAndErrorShownThenGoBackToPaymentMethodSelection() {
-        CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-        ApiException apiException = Payments.getInvalidIdentificationPayment();
-        MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-        stubProvider.setPaymentResponse(mpException);
-
-        presenter.initialize();
-
-        presenter.onErrorCancel(mpException);
-        assertTrue(stubView.showingPaymentMethodSelection);
-    }
-
-    //TODO FIX
-    @Ignore
-    @Test
-    public void createPaymentWithInvalidIdentificationThenShowError() {
-        final CheckoutPresenter presenter = getPaymentPresenterWithDefaultAdvancedConfigurationMla();
-
+    public void whenErrorShownAndInvalidIdentificationThenGoBackToPaymentMethodSelection() {
+        final CheckoutPresenter presenter = getPresenter();
         final ApiException apiException = Payments.getInvalidIdentificationPayment();
         final MercadoPagoError mpException = new MercadoPagoError(apiException, "");
-        stubProvider.setPaymentResponse(mpException);
 
-        presenter.initialize();
+        presenter.onErrorCancel(mpException);
 
-        final PaymentMethod paymentMethod = PaymentMethods.getPaymentMethodOnVisa();
-        final PayerCost payerCost = Installments.getInstallments().getPayerCosts().get(0);
-        final Issuer issuer = Issuers.getIssuers().get(0);
-        final Token token = Tokens.getTokenWithESC();
+        verify(checkoutView).showPaymentMethodSelection();
+        verifyNoMoreInteractions(checkoutView);
+    }
 
-        when(userSelectionRepository.getPaymentMethod()).thenReturn(paymentMethod);
-        when(userSelectionRepository.getPayerCost()).thenReturn(payerCost);
+    @Test
+    public void whenErrorShownAndValidIdentificationThenCancelCheckout() {
+        final CheckoutPresenter presenter = getPresenter();
+        final ApiException apiException = mock(ApiException.class);
+        final MercadoPagoError mpException = new MercadoPagoError(apiException, "");
 
-        //Response from payment method selection
-        presenter.onPaymentMethodSelectionResponse(token, null);
+        presenter.onErrorCancel(mpException);
 
-        //Response from Review And confirm
-        presenter.onPaymentConfirmation();
-        assertTrue(stubProvider.paymentRequested);
-
-        final Cause cause = stubProvider.failedResponse.getApiException().getCause().get(0);
-        assertEquals(cause.getCode(), ApiException.ErrorCodes.INVALID_IDENTIFICATION_NUMBER);
-        assertTrue(stubView.showingError);
+        verify(checkoutView).cancelCheckout();
+        verifyNoMoreInteractions(checkoutView);
     }
 
     @Test
