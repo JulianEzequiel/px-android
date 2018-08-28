@@ -7,7 +7,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import com.mercadopago.android.px.R;
 import com.mercadopago.android.px.configuration.ReviewAndConfirmConfiguration;
@@ -26,7 +25,6 @@ import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.Action;
 import com.mercadopago.android.px.model.Campaign;
 import com.mercadopago.android.px.model.Discount;
-import javax.annotation.Nonnull;
 
 public class OneTapView extends LinearLayout {
 
@@ -89,7 +87,7 @@ public class OneTapView extends LinearLayout {
     }
 
     public void update(@NonNull final OneTapModel model) {
-        this.oneTapModel = model;
+        oneTapModel = model;
         //Update Amount
         for (int i = 0; i < getChildCount(); i++) {
             if (getChildAt(i).equals(amountContainer)) {

@@ -3,8 +3,7 @@
 
     <!-- one tap -->
     <string name="px_payment_detail_title_modal">Detalhes</string>
-    <!-- TODO fix -->
-    <string name="px_processing_payment_button">Procesando tu pago</string>
+    <string name="px_processing_payment_button">Processando o seu pagamento</string>
 
     <!-- Banks deals -->
     <string name="px_empty_bank_deals">Você não tem nenhuma promoção disponível</string>

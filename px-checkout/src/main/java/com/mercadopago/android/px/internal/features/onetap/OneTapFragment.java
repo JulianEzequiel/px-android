@@ -21,7 +21,6 @@ import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
 import com.mercadopago.android.px.internal.features.onetap.components.OneTapView;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
-import com.mercadopago.android.px.internal.util.StatusBarDecorator;
 import com.mercadopago.android.px.internal.viewmodel.OneTapModel;
 import com.mercadopago.android.px.model.BusinessPayment;
 import com.mercadopago.android.px.model.Card;
@@ -30,7 +29,6 @@ import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
-import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
 public class OneTapFragment extends Fragment implements OneTap.View {
@@ -45,7 +43,6 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private ExplodingFragment explodingFragment;
     private Toolbar toolbar;
-//    private OneTapContainer oneTapContainer;
     private OneTapView oneTapView;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
@@ -149,7 +146,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
                 }
             });
         }
-        toolbar.setVisibility(View.VISIBLE);
+        showToolbar();
     }
 
     @Override
@@ -161,9 +158,6 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         } else if (requestCode == REQ_CODE_PAYMENT_PROCESSOR && getActivity() != null) {
             ((CheckoutActivity) getActivity()).resolvePaymentProcessor(resultCode, data);
         }
-//        else if (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_CANCELED) {
-//            presenter.onCardVauldCanceled();
-//        }
     }
 
     @Override
