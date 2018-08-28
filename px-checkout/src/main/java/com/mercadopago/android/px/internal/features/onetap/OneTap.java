@@ -48,6 +48,8 @@ public interface OneTap {
         void hideToolbar();
 
         void hideConfirmButton();
+
+        void updateViews(OneTapModel model);
     }
 
     interface Actions {

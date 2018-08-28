@@ -152,4 +152,8 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
             getView().onRecoverPaymentEscInvalid();
         }
     }
+
+    public void onViewResumed(final OneTapModel model) {
+        getView().updateViews(model);
+    }
 }

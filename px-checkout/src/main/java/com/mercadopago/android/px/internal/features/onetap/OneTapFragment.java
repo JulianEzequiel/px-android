@@ -18,7 +18,7 @@ import com.mercadopago.android.px.internal.features.MercadoPagoComponents;
 import com.mercadopago.android.px.internal.features.explode.ExplodeDecorator;
 import com.mercadopago.android.px.internal.features.explode.ExplodeParams;
 import com.mercadopago.android.px.internal.features.explode.ExplodingFragment;
-import com.mercadopago.android.px.internal.features.onetap.components.OneTapContainer;
+import com.mercadopago.android.px.internal.features.onetap.components.OneTapView;
 import com.mercadopago.android.px.internal.features.plugins.PaymentProcessorPluginActivity;
 import com.mercadopago.android.px.internal.tracker.Tracker;
 import com.mercadopago.android.px.internal.util.StatusBarDecorator;
@@ -30,6 +30,7 @@ import com.mercadopago.android.px.model.IPayment;
 import com.mercadopago.android.px.model.Payment;
 import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
 
+import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
 public class OneTapFragment extends Fragment implements OneTap.View {
@@ -44,7 +45,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private ExplodingFragment explodingFragment;
     private Toolbar toolbar;
-    private OneTapContainer oneTapContainer;
+//    private OneTapContainer oneTapContainer;
+    private OneTapView oneTapView;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
         final OneTapFragment oneTapFragment = new OneTapFragment();
@@ -65,7 +67,12 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     public void onResume() {
         super.onResume();
         final OneTapModel model = (OneTapModel) getArguments().getSerializable(ARG_ONE_TAP_MODEL);
-        configureView(getView(), presenter, model);
+        presenter.onViewResumed(model);
+    }
+
+    @Override
+    public void updateViews(final OneTapModel model) {
+        oneTapView.update(model);
     }
 
     @Override
@@ -119,12 +126,11 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     private void configureView(final View view, final OneTap.Actions actions, final OneTapModel model) {
-        final ViewGroup container = view.findViewById(R.id.main_container);
         toolbar = view.findViewById(R.id.toolbar);
-        container.removeAllViews();
         configureToolbar(toolbar);
-        oneTapContainer = new OneTapContainer(model, actions);
-        oneTapContainer.render(container);
+
+        oneTapView = view.findViewById(R.id.one_tap_container);
+        oneTapView.setOneTapModel(model, actions);
     }
 
     private void configureToolbar(final Toolbar toolbar) {
@@ -155,7 +161,9 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         } else if (requestCode == REQ_CODE_PAYMENT_PROCESSOR && getActivity() != null) {
             ((CheckoutActivity) getActivity()).resolvePaymentProcessor(resultCode, data);
         }
-        // CardVault cancel (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_CANCELED)
+//        else if (requestCode == REQ_CODE_CARD_VAULT && resultCode == RESULT_CANCELED) {
+//            presenter.onCardVauldCanceled();
+//        }
     }
 
     @Override
@@ -237,12 +245,18 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     @Override
     public void cancelLoading() {
+        showToolbar();
+        oneTapView.showButton();
         getChildFragmentManager().beginTransaction().remove(explodingFragment).commitNow();
+    }
+
+    private void showToolbar() {
+        toolbar.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void hideConfirmButton() {
-        oneTapContainer.hideConfirmButton();
+        oneTapView.hideConfirmButton();
     }
 
     @Override
