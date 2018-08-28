@@ -31,14 +31,13 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import com.mercadopago.android.px.R;
+import com.mercadopago.android.px.internal.util.StatusBarDecorator;
 import com.mercadopago.android.px.internal.util.TextUtil;
 
 public class ExplodingFragment extends Fragment {
 
     public interface ExplodingAnimationListener {
         void onAnimationFinished();
-
-        void onRevealStarted(final int revealColor);
     }
 
     private static final String ARG_EXPLODING_PARAMS = "ARG_EXPLODING_PARAMS";
@@ -303,7 +302,7 @@ public class ExplodingFragment extends Fragment {
                     TransitionDrawable colorSwitch = new TransitionDrawable(switchColors);
                     reveal.setBackgroundDrawable(colorSwitch);
                     colorSwitch.startTransition((int) animation.getDuration());
-                    listener.onRevealStarted(endColor);
+                    tintStatusBar(endColor);
                 }
             }
 
@@ -314,6 +313,10 @@ public class ExplodingFragment extends Fragment {
             }
         });
         anim.start();
+    }
+
+    private void tintStatusBar(final int color) {
+        new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(color);
     }
 
     @Override

@@ -40,6 +40,8 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
         this.yButtonPosition = yButtonPosition;
         this.buttonHeight = buttonHeight;
 
+        getView().hideToolbar();
+        getView().hideConfirmButton();
         getView().startLoadingButton(yButtonPosition, buttonHeight, paymentRepository.getPaymentTimeout());
         paymentRepository.startOneTapPayment(model, this);
     }
@@ -79,11 +81,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                     public void onAnimationFinished() {
                         getView().showPaymentResult(payment);
                     }
-
-                    @Override
-                    public void onRevealStarted(final int revealColor) {
-                        getView().tintStatusBar(revealColor);
-                    }
                 });
         }
     }
@@ -102,11 +99,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                     public void onAnimationFinished() {
                         getView().showPaymentResult(genericPayment);
                     }
-
-                    @Override
-                    public void onRevealStarted(final int revealColor) {
-                        getView().tintStatusBar(revealColor);
-                    }
                 });
         }
     }
@@ -124,11 +116,6 @@ import com.mercadopago.android.px.model.exceptions.MercadoPagoError;
                     @Override
                     public void onAnimationFinished() {
                         getView().showPaymentResult(businessPayment);
-                    }
-
-                    @Override
-                    public void onRevealStarted(final int revealColor) {
-                        getView().tintStatusBar(revealColor);
                     }
                 });
         }

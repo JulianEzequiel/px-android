@@ -37,8 +37,6 @@ public interface OneTap {
 
         void startLoadingButton(int yButtonPosition, final int buttonHeight, final int paymentTimeout);
 
-        void tintStatusBar(int color);
-
         //TODO shared with Checkout activity
 
         void showErrorView(@NonNull final MercadoPagoError error);
@@ -46,6 +44,10 @@ public interface OneTap {
         void showPaymentResult(@NonNull final IPayment paymentResult);
 
         void onRecoverPaymentEscInvalid();
+
+        void hideToolbar();
+
+        void hideConfirmButton();
     }
 
     interface Actions {

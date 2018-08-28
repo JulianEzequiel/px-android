@@ -44,6 +44,7 @@ public class OneTapFragment extends Fragment implements OneTap.View {
 
     private ExplodingFragment explodingFragment;
     private Toolbar toolbar;
+    private OneTapContainer oneTapContainer;
 
     public static OneTapFragment getInstance(@NonNull final OneTapModel oneTapModel) {
         final OneTapFragment oneTapFragment = new OneTapFragment();
@@ -122,7 +123,8 @@ public class OneTapFragment extends Fragment implements OneTap.View {
         toolbar = view.findViewById(R.id.toolbar);
         container.removeAllViews();
         configureToolbar(toolbar);
-        new OneTapContainer(model, actions).render(container);
+        oneTapContainer = new OneTapContainer(model, actions);
+        oneTapContainer.render(container);
     }
 
     private void configureToolbar(final Toolbar toolbar) {
@@ -142,10 +144,6 @@ public class OneTapFragment extends Fragment implements OneTap.View {
             });
         }
         toolbar.setVisibility(View.VISIBLE);
-    }
-
-    private void hideToolbar() {
-        toolbar.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -243,15 +241,17 @@ public class OneTapFragment extends Fragment implements OneTap.View {
     }
 
     @Override
-    public void tintStatusBar(final int color) {
-        new StatusBarDecorator(getActivity().getWindow()).setupStatusBarColor(color);
+    public void hideConfirmButton() {
+        oneTapContainer.hideConfirmButton();
+    }
 
+    @Override
+    public void hideToolbar() {
+        toolbar.setVisibility(View.INVISIBLE);
     }
 
     @Override
     public void startLoadingButton(final int yButtonPosition, final int buttonHeight, final int paymentTimeout) {
-        hideToolbar();
-
         final ExplodeParams explodeParams = new ExplodeParams(yButtonPosition, buttonHeight,
             (int) getContext().getResources().getDimension(R.dimen.px_m_margin),
             getContext().getResources().getString(R.string.px_processing_payment_button),

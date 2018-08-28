@@ -48,6 +48,7 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         addPaymentMethod(parent, configuration, discountRepository);
         addTermsAndConditions(parent, campaign);
         confirmButton = addConfirmButton(parent, discount);
+        showConfirmButton();
         return parent;
     }
 
@@ -105,9 +106,9 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
 
             @Override
             public void onClick(final int yButtonPosition, final int buttonHeight) {
-                if (confirmButton != null) {
-                    confirmButton.setVisibility(View.INVISIBLE);
-                }
+//                if (confirmButton != null) {
+//                    confirmButton.setVisibility(View.INVISIBLE);
+//                }
                 getActions().confirmPayment(yButtonPosition, buttonHeight);
             }
         };
@@ -118,5 +119,13 @@ public class OneTapContainer extends CompactComponent<OneTapModel, OneTap.Action
         ViewUtils.setMarginTopInView(view, parent.getContext().getResources().getDimensionPixelSize(resMargin));
         parent.addView(view);
         return view;
+    }
+
+    public void hideConfirmButton() {
+        confirmButton.setVisibility(View.INVISIBLE);
+    }
+
+    public void showConfirmButton() {
+        confirmButton.setVisibility(View.VISIBLE);
     }
 }
