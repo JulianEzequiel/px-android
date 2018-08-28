@@ -156,6 +156,7 @@ public class CardVaultActivity extends AppCompatActivity implements CardVaultVie
             .setPaymentRecovery(presenter.getPaymentRecovery())
             .setTrackingReason(reason)
             .startActivity();
+        animateTransitionSlideInSlideOut();
     }
 
     @Override
@@ -355,6 +356,7 @@ public class CardVaultActivity extends AppCompatActivity implements CardVaultVie
 
     @Override
     public void finishWithResult() {
+        overridePendingTransition(R.anim.px_slide_left_to_right_in, R.anim.px_slide_left_to_right_out);
         final Intent returnIntent = new Intent();
         returnIntent.putExtra("payerCost", JsonUtil.getInstance().toJson(presenter.getPayerCost()));
         returnIntent.putExtra("token", JsonUtil.getInstance().toJson(presenter.getToken()));
