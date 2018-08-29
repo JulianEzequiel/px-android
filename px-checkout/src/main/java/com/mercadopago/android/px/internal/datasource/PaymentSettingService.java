@@ -21,15 +21,14 @@ public class PaymentSettingService implements PaymentSettingRepository {
     private static final String PREF_PUBLIC_KEY = "PREF_PUBLIC_KEY";
     private static final String PREF_PRIVATE_KEY = "PREF_PRIVATE_KEY";
     private static final String PREF_TOKEN = "PREF_TOKEN";
-    private static final String PREF_ADVANCED = "PREF_ADVANCED";
 
     @NonNull private final SharedPreferences sharedPreferences;
     @NonNull private final JsonUtil jsonUtil;
 
     //mem cache
     private CheckoutPreference pref;
-    //TODO add persistance.
     private PaymentConfiguration paymentConfiguration;
+    private AdvancedConfiguration advancedConfiguration;
 
     public PaymentSettingService(@NonNull final SharedPreferences sharedPreferences, @NonNull final JsonUtil jsonUtil) {
         this.sharedPreferences = sharedPreferences;
@@ -42,6 +41,7 @@ public class PaymentSettingService implements PaymentSettingRepository {
         edit.clear().apply();
         pref = null;
         paymentConfiguration = null;
+        advancedConfiguration = null;
     }
 
     @Override
@@ -59,9 +59,7 @@ public class PaymentSettingService implements PaymentSettingRepository {
 
     @Override
     public void configure(@NonNull final AdvancedConfiguration advancedConfiguration) {
-        final SharedPreferences.Editor edit = sharedPreferences.edit();
-        edit.putString(PREF_ADVANCED, jsonUtil.toJson(advancedConfiguration));
-        edit.apply();
+        this.advancedConfiguration = advancedConfiguration;
     }
 
     @Override
@@ -144,8 +142,10 @@ public class PaymentSettingService implements PaymentSettingRepository {
     @NonNull
     @Override
     public AdvancedConfiguration getAdvancedConfiguration() {
-        // should never be null - see MercadoPagoCheckout
-        return jsonUtil.fromJson(sharedPreferences.getString(PREF_ADVANCED, ""), AdvancedConfiguration.class);
+        if (advancedConfiguration == null) {
+            return new AdvancedConfiguration.Builder().build();
+        }
+        return advancedConfiguration;
     }
 
     @Nullable
